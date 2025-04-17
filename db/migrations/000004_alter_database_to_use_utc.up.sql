@@ -1,0 +1,1 @@
+ALTER DATABASE cqrs SET timezone TO 'UTC';

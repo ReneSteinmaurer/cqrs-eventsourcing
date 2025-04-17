@@ -1,0 +1,7 @@
+database:
+  host: localhost
+  port: 5439
+  user: postgres
+  password: testtest
+  name: cqrs
+  sslmode: disable
