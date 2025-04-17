@@ -1,19 +1,18 @@
-package projection
+package wishlist_projection
 
 import (
 	"context"
 	"cqrs-playground/shared"
-	"cqrs-playground/shopping-cart/add_item"
-	"cqrs-playground/shopping-cart/remove_item"
+	"cqrs-playground/wishlist/add_item"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"time"
 )
 
-const projectionName = "CartProjection"
+const projectionName = "WishlistProjection"
 
-type CartProjection struct {
+type WishlistProjection struct {
 	EventStore        *shared.EventStore
 	DB                *pgxpool.Pool
 	LastUpdate        time.Time
@@ -22,13 +21,13 @@ type CartProjection struct {
 	cancel            context.CancelFunc
 }
 
-func NewCartProjection(ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, projectionStateUpdater *shared.ProjectionStateUpdater) *CartProjection {
+func NewWishlistProjection(ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, projectionStateUpdater *shared.ProjectionStateUpdater) *WishlistProjection {
 	ctx, cancel := context.WithCancel(ctx)
 	projectionStatus, err := eventStore.GetLastUpdateFromProjection(ctx, projectionName)
 	if err != nil {
 		panic(err)
 	}
-	return &CartProjection{
+	return &WishlistProjection{
 		ctx:               ctx,
 		cancel:            cancel,
 		projectionUpdater: projectionStateUpdater,
@@ -38,7 +37,7 @@ func NewCartProjection(ctx context.Context, eventStore *shared.EventStore, db *p
 	}
 }
 
-func (cp *CartProjection) Start(interval time.Duration) {
+func (cp *WishlistProjection) Start(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -47,13 +46,13 @@ func (cp *CartProjection) Start(interval time.Duration) {
 		case <-ticker.C:
 			cp.updateProjection()
 		case <-cp.ctx.Done():
-			log.Println("CartProjection beendet.")
+			log.Println("WishlistProjection beendet.")
 			return
 		}
 	}
 }
 
-func (cp *CartProjection) updateProjection() {
+func (cp *WishlistProjection) updateProjection() {
 	events, err := cp.EventStore.GetEventsSince(cp.ctx, cp.LastUpdate.UTC())
 	if err != nil {
 		log.Println("Error fetching events:", err)
@@ -61,10 +60,10 @@ func (cp *CartProjection) updateProjection() {
 	}
 
 	for _, event := range events {
-		if event.Type == "ItemAddedToCart" {
-			cp.applyItemAdded(event)
-		} else if event.Type == "ItemRemovedFromCart" {
-			cp.applyItemRemoved(event)
+		if event.Type == add_item.ItemAddedToWishlistEventTypeV1 {
+			cp.applyItemAddedV1(event)
+		} else if event.Type == add_item.ItemAddedToWishlistEventTypeV2 {
+			cp.applyItemAddedV2(event)
 		}
 
 		now := time.Now().UTC()
@@ -73,48 +72,42 @@ func (cp *CartProjection) updateProjection() {
 	}
 }
 
-func (cp *CartProjection) applyItemAdded(event shared.Event) {
-	log.Println("Item added to cart")
-	var payload add_item.ItemAddedToCartEvent
+func (cp *WishlistProjection) applyItemAddedV1(event shared.Event) {
+	log.Println("Item added to wishlist")
+	var payload add_item.ItemAddedToWishlistEventV1
 	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return
 	}
 
 	const query = `
-		insert into cart_items (cart_id, item, quantity)
+		insert into wishlist_items (wishlist_id, item)
+        values ($1, $2)
+		on conflict do nothing 
+	`
+
+	_, err := cp.DB.Exec(cp.ctx, query, payload.WishlistId, payload.Item)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+	}
+}
+
+func (cp *WishlistProjection) applyItemAddedV2(event shared.Event) {
+	log.Println("Item added to wishlist")
+	var payload add_item.ItemAddedToWishlistEventV2
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		insert into wishlist_items (wishlist_id, item, user_id)
         values ($1, $2, $3)
-        on conflict (cart_id, item)
-        do update set quantity = cart_items.quantity + EXCLUDED.quantity
+		on conflict do nothing 
 	`
 
-	_, err := cp.DB.Exec(cp.ctx, query, payload.CartId, payload.Item, payload.Quantity)
+	_, err := cp.DB.Exec(cp.ctx, query, payload.WishlistId, payload.Item, payload.UserId)
 	if err != nil {
 		log.Println("Error updating read-model:", err)
 	}
-}
-
-func (cp *CartProjection) applyItemRemoved(event shared.Event) {
-	log.Println("Item removed from cart")
-	var payload remove_item.ItemRemovedFromCartEvent
-	if err := json.Unmarshal(event.Payload, &payload); err != nil {
-		log.Println("Error unmarshalling event:", err)
-		return
-	}
-
-	const query = `
-		update cart_items 
-		set quantity = quantity-1 
-		where item = $1 and cart_id = $2
-		and quantity > 0
-	`
-
-	_, err := cp.DB.Exec(cp.ctx, query, payload.Item, payload.CartId)
-	if err != nil {
-		log.Println("Error updating read-model:", err)
-	}
-}
-
-func (cp *CartProjection) Stop() {
-	cp.cancel()
 }

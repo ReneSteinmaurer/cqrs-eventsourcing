@@ -1,0 +1,1 @@
+alter table wishlist_items add user_id text default null;

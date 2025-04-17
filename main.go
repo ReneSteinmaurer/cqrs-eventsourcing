@@ -5,9 +5,11 @@ import (
 	"cqrs-playground/api/rest"
 	db2 "cqrs-playground/db"
 	"cqrs-playground/shared"
-	"cqrs-playground/shopping-cart/add_item"
-	"cqrs-playground/shopping-cart/projection"
-	"cqrs-playground/shopping-cart/remove_item"
+	cart_add_item "cqrs-playground/shopping-cart/add_item"
+	cart_projection "cqrs-playground/shopping-cart/projection"
+	cart_remove_item "cqrs-playground/shopping-cart/remove_item"
+	wishlist_add_item "cqrs-playground/wishlist/add_item"
+	"cqrs-playground/wishlist/wishlist_projection"
 	"log"
 	"net/http"
 	"time"
@@ -19,15 +21,24 @@ func main() {
 
 	eventStore := shared.EventStore{DB: db.Pool}
 
-	cartProjection := projection.NewCartProjection(ctx, &eventStore, db.Pool)
+	projectionUpdater := shared.NewProjectionStateUpdater(ctx, db.Pool)
+
+	cartProjection := cart_projection.NewCartProjection(ctx, &eventStore, db.Pool, projectionUpdater)
 	go cartProjection.Start(100 * time.Millisecond)
 
-	addItemHandler := add_item.NewAddItemHandler(ctx, &eventStore)
-	removeItemHandler := remove_item.NewRemoveItemHandler(ctx, &eventStore)
-	api := rest.NewCartApi(addItemHandler, removeItemHandler)
+	wishlistProjection := wishlist_projection.NewWishlistProjection(ctx, &eventStore, db.Pool, projectionUpdater)
+	go wishlistProjection.Start(100 * time.Millisecond)
 
-	http.HandleFunc("/cart/add-item", api.AddItem)
-	http.HandleFunc("/cart/remove-item", api.RemoveItem)
+	addItemHandlerCart := cart_add_item.NewAddItemHandler(ctx, &eventStore)
+	removeItemHandlerCart := cart_remove_item.NewRemoveItemHandler(ctx, &eventStore)
+	cartApi := rest.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
+
+	addItemHandlerWishlist := wishlist_add_item.NewAddItemHandler(ctx, &eventStore)
+	wishlistApi := rest.NewWishlistApi(addItemHandlerWishlist)
+
+	http.HandleFunc("/cart/add-item", cartApi.AddItem)
+	http.HandleFunc("/cart/remove-item", cartApi.RemoveItem)
+	http.HandleFunc("/wishlist/add-item", wishlistApi.AddItem)
 
 	log.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)
