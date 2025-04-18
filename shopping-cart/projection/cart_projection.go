@@ -16,13 +16,17 @@ const projectionName = "CartProjection"
 type CartProjection struct {
 	EventStore        *shared.EventStore
 	DB                *pgxpool.Pool
+	KafkaService      *shared.KafkaService
 	LastUpdate        time.Time
 	projectionUpdater *shared.ProjectionStateUpdater
 	ctx               context.Context
 	cancel            context.CancelFunc
 }
 
-func NewCartProjection(ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, projectionStateUpdater *shared.ProjectionStateUpdater) *CartProjection {
+func NewCartProjection(
+	ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, projectionStateUpdater *shared.ProjectionStateUpdater,
+	kafkaService *shared.KafkaService,
+) *CartProjection {
 	ctx, cancel := context.WithCancel(ctx)
 	projectionStatus, err := eventStore.GetLastUpdateFromProjection(ctx, projectionName)
 	if err != nil {
@@ -34,6 +38,7 @@ func NewCartProjection(ctx context.Context, eventStore *shared.EventStore, db *p
 		projectionUpdater: projectionStateUpdater,
 		EventStore:        eventStore,
 		DB:                db,
+		KafkaService:      kafkaService,
 		LastUpdate:        projectionStatus.LastProcessedTimestamp,
 	}
 }

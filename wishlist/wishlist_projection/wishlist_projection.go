@@ -16,17 +16,22 @@ type WishlistProjection struct {
 	EventStore        *shared.EventStore
 	DB                *pgxpool.Pool
 	LastUpdate        time.Time
+	KafkaService      *shared.KafkaService
 	projectionUpdater *shared.ProjectionStateUpdater
 	ctx               context.Context
 	cancel            context.CancelFunc
 }
 
-func NewWishlistProjection(ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, projectionStateUpdater *shared.ProjectionStateUpdater) *WishlistProjection {
+func NewWishlistProjection(
+	ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, projectionStateUpdater *shared.ProjectionStateUpdater,
+	kafkaService *shared.KafkaService,
+) *WishlistProjection {
 	ctx, cancel := context.WithCancel(ctx)
 	projectionStatus, err := eventStore.GetLastUpdateFromProjection(ctx, projectionName)
 	if err != nil {
 		panic(err)
 	}
+
 	return &WishlistProjection{
 		ctx:               ctx,
 		cancel:            cancel,
@@ -34,48 +39,59 @@ func NewWishlistProjection(ctx context.Context, eventStore *shared.EventStore, d
 		EventStore:        eventStore,
 		DB:                db,
 		LastUpdate:        projectionStatus.LastProcessedTimestamp,
+		KafkaService:      kafkaService,
 	}
 }
 
-func (cp *WishlistProjection) Start(interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+func (cp *WishlistProjection) Start() {
+	go cp.itemAddedToWishlistEventType1Listener()
+	go cp.itemAddedToWishlistEventType2Listener()
+}
+
+func (cp *WishlistProjection) itemAddedToWishlistEventType1Listener() {
+	consumer := cp.KafkaService.NewConsumerOffsetNewest(add_item.ItemAddedToWishlistEventTypeV1)
+	defer func() {
+		log.Println("Closing V1 consumer...")
+		_ = consumer.Close()
+	}()
+
+	msgs := consumer.Messages()
 
 	for {
 		select {
-		case <-ticker.C:
-			cp.updateProjection()
 		case <-cp.ctx.Done():
-			log.Println("WishlistProjection beendet.")
+			log.Println("itemAddedToWishlistEventType1Listener stopped")
 			return
+		case msg := <-msgs:
+			cp.applyItemAddedV1(msg.Value)
 		}
 	}
 }
 
-func (cp *WishlistProjection) updateProjection() {
-	events, err := cp.EventStore.GetEventsSince(cp.ctx, cp.LastUpdate.UTC())
-	if err != nil {
-		log.Println("Error fetching events:", err)
-		return
-	}
+func (cp *WishlistProjection) itemAddedToWishlistEventType2Listener() {
+	consumer := cp.KafkaService.NewConsumerOffsetNewest(add_item.ItemAddedToWishlistEventTypeV2)
+	defer func() {
+		log.Println("Closing V2 consumer...")
+		_ = consumer.Close()
+	}()
 
-	for _, event := range events {
-		if event.Type == add_item.ItemAddedToWishlistEventTypeV1 {
-			cp.applyItemAddedV1(event)
-		} else if event.Type == add_item.ItemAddedToWishlistEventTypeV2 {
-			cp.applyItemAddedV2(event)
+	msgs := consumer.Messages()
+
+	for {
+		select {
+		case <-cp.ctx.Done():
+			log.Println("itemAddedToWishlistEventType2Listener stopped")
+			return
+		case msg := <-msgs:
+			cp.applyItemAddedV2(msg.Value)
 		}
-
-		now := time.Now().UTC()
-		cp.LastUpdate = now
-		cp.projectionUpdater.UpdateProjectionState(projectionName, event.Id, now)
 	}
 }
 
-func (cp *WishlistProjection) applyItemAddedV1(event shared.Event) {
-	log.Println("Item added to wishlist")
+func (cp *WishlistProjection) applyItemAddedV1(payloadJSON []byte) {
+	log.Println("Item added to wishlist v1")
 	var payload add_item.ItemAddedToWishlistEventV1
-	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return
 	}
@@ -92,10 +108,10 @@ func (cp *WishlistProjection) applyItemAddedV1(event shared.Event) {
 	}
 }
 
-func (cp *WishlistProjection) applyItemAddedV2(event shared.Event) {
-	log.Println("Item added to wishlist")
+func (cp *WishlistProjection) applyItemAddedV2(payloadJSON []byte) {
+	log.Println("Item added to wishlist v2")
 	var payload add_item.ItemAddedToWishlistEventV2
-	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return
 	}

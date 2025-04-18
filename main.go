@@ -18,22 +18,43 @@ import (
 func main() {
 	ctx := context.Background()
 	db := db2.NewDB(ctx)
+	kafkaService := shared.NewKafkaService()
+	//publisher := kafkaService.NewSyncProducer()
+
+	/*go func() {
+		partition := kafkaService.NewConsumerOffsetNewest("test")
+
+		for message := range partition.Messages() {
+			log.Printf("Nachricht empfangen: Partition=%d, Offset=%d, Key=%s, Value=%s\n",
+				message.Partition, message.Offset, string(message.Key), string(message.Value))
+		}
+	}()
+
+	err := kafkaService.SendEvent(publisher, "test", "Hallo oida")
+	if err != nil {
+		panic(err)
+	}
+
+	err = kafkaService.SendEvent(publisher, "test", "Test servas servas")
+	if err != nil {
+		panic(err)
+	}*/
 
 	eventStore := shared.EventStore{DB: db.Pool}
 
 	projectionUpdater := shared.NewProjectionStateUpdater(ctx, db.Pool)
 
-	cartProjection := cart_projection.NewCartProjection(ctx, &eventStore, db.Pool, projectionUpdater)
+	cartProjection := cart_projection.NewCartProjection(ctx, &eventStore, db.Pool, projectionUpdater, kafkaService)
 	go cartProjection.Start(100 * time.Millisecond)
 
-	wishlistProjection := wishlist_projection.NewWishlistProjection(ctx, &eventStore, db.Pool, projectionUpdater)
-	go wishlistProjection.Start(100 * time.Millisecond)
+	wishlistProjection := wishlist_projection.NewWishlistProjection(ctx, &eventStore, db.Pool, projectionUpdater, kafkaService)
+	wishlistProjection.Start()
 
 	addItemHandlerCart := cart_add_item.NewAddItemHandler(ctx, &eventStore)
 	removeItemHandlerCart := cart_remove_item.NewRemoveItemHandler(ctx, &eventStore)
 	cartApi := rest.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
 
-	addItemHandlerWishlist := wishlist_add_item.NewAddItemHandler(ctx, &eventStore)
+	addItemHandlerWishlist := wishlist_add_item.NewAddItemHandler(ctx, &eventStore, kafkaService)
 	wishlistApi := rest.NewWishlistApi(addItemHandlerWishlist)
 
 	http.HandleFunc("/cart/add-item", cartApi.AddItem)

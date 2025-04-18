@@ -5,19 +5,25 @@ import (
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
-	"time"
+	"github.com/IBM/sarama"
 )
 
 type AddItemHandler struct {
-	eventStore *shared.EventStore
-	ctx        context.Context
+	eventStore   *shared.EventStore
+	kafkaService *shared.KafkaService
+	producer     sarama.SyncProducer
+	ctx          context.Context
 }
 
-func NewAddItemHandler(ctx context.Context, eventStore *shared.EventStore) *AddItemHandler {
+func NewAddItemHandler(
+	ctx context.Context, eventStore *shared.EventStore, kafkaService *shared.KafkaService,
+) *AddItemHandler {
+	producer := kafkaService.NewSyncProducer()
 	return &AddItemHandler{
-		eventStore: eventStore,
-		ctx:        ctx,
+		eventStore:   eventStore,
+		kafkaService: kafkaService,
+		producer:     producer,
+		ctx:          ctx,
 	}
 }
 
@@ -39,13 +45,16 @@ func (a *AddItemHandler) HandleV1(cmd AddItemToWishlistCommandV1) error {
 		return err
 	}
 
-	event := shared.Event{
-		Id:        uuid.NewString(),
-		Type:      ItemAddedToWishlistEventTypeV1,
-		Timestamp: time.Now().UTC(),
-		Payload:   payloadJSON,
+	event := shared.NewEvent(ItemAddedToWishlistEventTypeV1, payloadJSON)
+	err = a.eventStore.Save(a.ctx, event)
+	if err != nil {
+		return err
 	}
 
+	err = a.kafkaService.SendEvent(a.producer, ItemAddedToWishlistEventTypeV1, payloadJSON)
+	if err != nil {
+		panic(err)
+	}
 	return a.eventStore.Save(a.ctx, event)
 }
 
@@ -71,12 +80,15 @@ func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
 		return err
 	}
 
-	event := shared.Event{
-		Id:        uuid.NewString(),
-		Type:      ItemAddedToWishlistEventTypeV2,
-		Timestamp: time.Now().UTC(),
-		Payload:   payloadJSON,
+	event := shared.NewEvent(ItemAddedToWishlistEventTypeV2, payloadJSON)
+	err = a.eventStore.Save(a.ctx, event)
+	if err != nil {
+		return err
 	}
 
-	return a.eventStore.Save(a.ctx, event)
+	err = a.kafkaService.SendEvent(a.producer, ItemAddedToWishlistEventTypeV2, payloadJSON)
+	if err != nil {
+		panic(err)
+	}
+	return nil
 }

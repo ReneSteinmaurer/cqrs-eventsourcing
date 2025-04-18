@@ -9,6 +9,12 @@ import (
 
 type Config struct {
 	Database DatabaseConfig `yaml:"database"`
+	Kafka    KafkaConfig    `yaml:"kafka"`
+}
+
+type KafkaConfig struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
 type DatabaseConfig struct {
@@ -50,4 +56,8 @@ func (c *DatabaseConfig) ConnectionString() string {
 func (c *DatabaseConfig) SafeConnectionString() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		c.User, "*****", c.Host, c.Port, c.Name, c.SSLMode)
+}
+
+func (k *KafkaConfig) HostAndPortString() string {
+	return k.Host + ":" + k.Port
 }
