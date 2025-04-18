@@ -19,26 +19,6 @@ func main() {
 	ctx := context.Background()
 	db := db2.NewDB(ctx)
 	kafkaService := shared.NewKafkaService()
-	//publisher := kafkaService.NewSyncProducer()
-
-	/*go func() {
-		partition := kafkaService.NewConsumerOffsetNewest("test")
-
-		for message := range partition.Messages() {
-			log.Printf("Nachricht empfangen: Partition=%d, Offset=%d, Key=%s, Value=%s\n",
-				message.Partition, message.Offset, string(message.Key), string(message.Value))
-		}
-	}()
-
-	err := kafkaService.SendEvent(publisher, "test", "Hallo oida")
-	if err != nil {
-		panic(err)
-	}
-
-	err = kafkaService.SendEvent(publisher, "test", "Test servas servas")
-	if err != nil {
-		panic(err)
-	}*/
 
 	eventStore := shared.EventStore{DB: db.Pool}
 
