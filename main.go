@@ -9,6 +9,7 @@ import (
 	cart_projection "cqrs-playground/shopping_cart/projection"
 	cart_remove_item "cqrs-playground/shopping_cart/remove_item"
 	wishlist_add_item "cqrs-playground/wishlist/add_item"
+	wishlist_remove_item "cqrs-playground/wishlist/remove_item"
 	"cqrs-playground/wishlist/wishlist_projection"
 	"log"
 	"net/http"
@@ -35,11 +36,13 @@ func main() {
 	cartApi := rest.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
 
 	addItemHandlerWishlist := wishlist_add_item.NewAddItemHandler(ctx, &eventStore, kafkaService)
-	wishlistApi := rest.NewWishlistApi(addItemHandlerWishlist)
+	removeItemHandlerWishlist := wishlist_remove_item.NewRemoveItemHandler(ctx, &eventStore, kafkaService)
+	wishlistApi := rest.NewWishlistApi(addItemHandlerWishlist, removeItemHandlerWishlist)
 
 	http.HandleFunc("/cart/add-item", cartApi.AddItem)
 	http.HandleFunc("/cart/remove-item", cartApi.RemoveItem)
 	http.HandleFunc("/wishlist/add-item", wishlistApi.AddItem)
+	http.HandleFunc("/wishlist/remove-item", wishlistApi.RemoveItem)
 
 	log.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)
