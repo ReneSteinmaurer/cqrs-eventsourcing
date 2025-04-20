@@ -37,7 +37,7 @@ func (w *WishlistAggregate) Apply(event shared.Event) {
 }
 
 func (w *WishlistAggregate) HandleAddItem(cmd events.ItemAddedToWishlistEventV2) error {
-	if !w.canAdd(cmd.Item) {
+	if w.alreadyExists(cmd.Item) {
 		return errors.New("item already exists in wishlist")
 	}
 	if w.hasReachedMaxItems() {
@@ -46,8 +46,8 @@ func (w *WishlistAggregate) HandleAddItem(cmd events.ItemAddedToWishlistEventV2)
 	return nil
 }
 
-func (w *WishlistAggregate) canAdd(item string) bool {
-	return !w.Items[item]
+func (w *WishlistAggregate) alreadyExists(item string) bool {
+	return w.Items[item]
 }
 
 func (w *WishlistAggregate) hasReachedMaxItems() bool {

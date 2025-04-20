@@ -117,7 +117,8 @@ func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
 			aggregateType,
 			aggregateKey,
 			events.ItemAddedToWishlistEventTypeV2,
-			version+1, payloadJSON)
+			version+1,
+			payloadJSON)
 
 		err = a.eventStore.Save(a.ctx, event)
 		if err != nil {
