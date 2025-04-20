@@ -3,8 +3,10 @@ package add_item
 import (
 	"context"
 	"cqrs-playground/shared"
+	"cqrs-playground/wishlist"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/IBM/sarama"
 )
 
@@ -45,7 +47,12 @@ func (a *AddItemHandler) HandleV1(cmd AddItemToWishlistCommandV1) error {
 		return err
 	}
 
-	event := shared.NewEvent(ItemAddedToWishlistEventTypeV1, payloadJSON)
+	version, err := a.eventStore.LoadCurrentVersion(a.ctx, wishlist.AggregateId)
+	if err != nil {
+		panic(err)
+	}
+
+	event := shared.NewEvent(wishlist.AggregateId, ItemAddedToWishlistEventTypeV1, version+1, payloadJSON)
 	err = a.eventStore.Save(a.ctx, event)
 	if err != nil {
 		return err
@@ -55,7 +62,7 @@ func (a *AddItemHandler) HandleV1(cmd AddItemToWishlistCommandV1) error {
 	if err != nil {
 		panic(err)
 	}
-	return a.eventStore.Save(a.ctx, event)
+	return nil
 }
 
 func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
@@ -69,26 +76,37 @@ func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
 		return errors.New("userId cannot be empty string")
 	}
 
-	payload := ItemAddedToWishlistEventV2{
-		WishlistId: cmd.WishlistId,
-		Item:       cmd.Item,
-		UserId:     cmd.UserId,
-	}
+	return shared.RetryHandlerLogic(func() error {
+		aggregateId := aggregateIdForWishlist(cmd.WishlistId)
+		version, err := a.eventStore.LoadCurrentVersion(a.ctx, aggregateId)
+		if err != nil {
+			return err
+		}
 
-	payloadJSON, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
+		payload := ItemAddedToWishlistEventV2{
+			WishlistId: cmd.WishlistId,
+			Item:       cmd.Item,
+			UserId:     cmd.UserId,
+		}
 
-	event := shared.NewEvent(ItemAddedToWishlistEventTypeV2, payloadJSON)
-	err = a.eventStore.Save(a.ctx, event)
-	if err != nil {
-		return err
-	}
+		payloadJSON, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
 
-	err = a.kafkaService.SendEvent(a.producer, ItemAddedToWishlistEventTypeV2, payloadJSON)
-	if err != nil {
-		panic(err)
-	}
-	return nil
+		event := shared.NewEvent(aggregateId, ItemAddedToWishlistEventTypeV2, version+1, payloadJSON)
+		err = a.eventStore.Save(a.ctx, event)
+		if err != nil {
+			return err
+		}
+		err = a.kafkaService.SendEvent(a.producer, ItemAddedToWishlistEventTypeV2, payloadJSON)
+		if err != nil {
+			panic(err)
+		}
+		return nil
+	})
+}
+
+func aggregateIdForWishlist(id int) string {
+	return fmt.Sprintf("%s-%d", wishlist.AggregateId, id)
 }

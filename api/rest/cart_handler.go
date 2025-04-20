@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"cqrs-playground/shopping-cart/add_item"
-	"cqrs-playground/shopping-cart/remove_item"
+	"cqrs-playground/shopping_cart/add_item"
+	"cqrs-playground/shopping_cart/remove_item"
 	"encoding/json"
 	"net/http"
 )

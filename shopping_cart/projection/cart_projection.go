@@ -3,8 +3,8 @@ package projection
 import (
 	"context"
 	"cqrs-playground/shared"
-	"cqrs-playground/shopping-cart/add_item"
-	"cqrs-playground/shopping-cart/remove_item"
+	"cqrs-playground/shopping_cart/add_item"
+	"cqrs-playground/shopping_cart/remove_item"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"

@@ -3,6 +3,7 @@ package shared
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
@@ -14,12 +15,23 @@ type EventStore struct {
 
 func (es *EventStore) Save(ctx context.Context, event Event) error {
 	const query = `
-		INSERT INTO events (id, type, timestamp, payload)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO events (id, type, timestamp, payload, aggregate_id, version)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := es.DB.Exec(ctx, query, event.Id, event.Type, event.Timestamp, event.Payload)
+	_, err := es.DB.Exec(ctx, query, event.Id, event.Type, event.Timestamp, event.Payload, event.AggregateId, event.Version)
+	if IsVersionConflict(err) {
+		fmt.Printf("Postgres error: event could not be persisted due to version mismatch aggregateId=%s version=%d\n",
+			event.AggregateId, event.Version)
+	}
 	return err
+}
+
+func (es *EventStore) LoadCurrentVersion(ctx context.Context, aggregateId string) (int, error) {
+	const query = `SELECT COALESCE(MAX(version), 0) FROM events WHERE aggregate_id = $1`
+	var version int
+	err := es.DB.QueryRow(ctx, query, aggregateId).Scan(&version)
+	return version, err
 }
 
 func (es *EventStore) GetEventsSince(ctx context.Context, lastUpdatedTime time.Time) ([]Event, error) {
