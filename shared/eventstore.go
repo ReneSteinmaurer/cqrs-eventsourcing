@@ -15,23 +15,60 @@ type EventStore struct {
 
 func (es *EventStore) Save(ctx context.Context, event Event) error {
 	const query = `
-		INSERT INTO events (id, type, timestamp, payload, aggregate_id, version)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO events (id, type, timestamp, payload, aggregate_key, aggregate_type, version)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
-	_, err := es.DB.Exec(ctx, query, event.Id, event.Type, event.Timestamp, event.Payload, event.AggregateId, event.Version)
+	_, err := es.DB.Exec(
+		ctx,
+		query,
+		event.Id,
+		event.Type,
+		event.Timestamp,
+		event.Payload,
+		event.AggregateKey,
+		event.AggregateType,
+		event.Version)
+
 	if IsVersionConflict(err) {
-		fmt.Printf("Postgres error: event could not be persisted due to version mismatch aggregateId=%s version=%d\n",
-			event.AggregateId, event.Version)
+		fmt.Printf("Postgres error: event could not be persisted due to version mismatch aggregateKey=%s aggregateType=%s version=%d\n",
+			event.AggregateKey, event.AggregateType, event.Version)
 	}
 	return err
 }
 
-func (es *EventStore) LoadCurrentVersion(ctx context.Context, aggregateId string) (int, error) {
-	const query = `SELECT COALESCE(MAX(version), 0) FROM events WHERE aggregate_id = $1`
+func (es *EventStore) LoadCurrentVersion(ctx context.Context, aggregateKey, aggregateType string) (int, error) {
+	const query = `SELECT COALESCE(MAX(version), 0) FROM events WHERE aggregate_key = $1 and aggregate_type = $2`
 	var version int
-	err := es.DB.QueryRow(ctx, query, aggregateId).Scan(&version)
+	err := es.DB.QueryRow(ctx, query, aggregateKey, aggregateType).Scan(&version)
 	return version, err
+}
+
+func (es *EventStore) GetEventsByAggregateId(ctx context.Context, aggregateKey, aggregateType string) ([]Event, error) {
+	const query = `
+		SELECT id, type, timestamp, payload, aggregate_key, aggregate_type, version
+		FROM events
+		WHERE aggregate_key = $1
+		AND aggregate_type = $2
+		ORDER BY version ASC
+	`
+
+	rows, err := es.DB.Query(ctx, query, aggregateKey, aggregateType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []Event
+	for rows.Next() {
+		var e Event
+		if err := rows.Scan(&e.Id, &e.Type, &e.Timestamp, &e.Payload, &e.AggregateType, &e.AggregateKey, &e.Version); err != nil {
+			return nil, err
+		}
+		events = append(events, e)
+	}
+
+	return events, nil
 }
 
 func (es *EventStore) GetEventsSince(ctx context.Context, lastUpdatedTime time.Time) ([]Event, error) {

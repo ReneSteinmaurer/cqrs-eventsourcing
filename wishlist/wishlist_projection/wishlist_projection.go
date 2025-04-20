@@ -3,7 +3,7 @@ package wishlist_projection
 import (
 	"context"
 	"cqrs-playground/shared"
-	"cqrs-playground/wishlist/add_item"
+	"cqrs-playground/wishlist/events"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
@@ -49,7 +49,7 @@ func (cp *WishlistProjection) Start() {
 }
 
 func (cp *WishlistProjection) itemAddedToWishlistEventType1Listener() {
-	consumer := cp.KafkaService.NewConsumerOffsetNewest(add_item.ItemAddedToWishlistEventTypeV1)
+	consumer := cp.KafkaService.NewConsumerOffsetNewest(events.ItemAddedToWishlistEventTypeV1)
 	defer func() {
 		log.Println("Closing V1 consumer...")
 		_ = consumer.Close()
@@ -69,7 +69,7 @@ func (cp *WishlistProjection) itemAddedToWishlistEventType1Listener() {
 }
 
 func (cp *WishlistProjection) itemAddedToWishlistEventType2Listener() {
-	consumer := cp.KafkaService.NewConsumerOffsetNewest(add_item.ItemAddedToWishlistEventTypeV2)
+	consumer := cp.KafkaService.NewConsumerOffsetNewest(events.ItemAddedToWishlistEventTypeV2)
 	defer func() {
 		log.Println("Closing V2 consumer...")
 		_ = consumer.Close()
@@ -90,7 +90,7 @@ func (cp *WishlistProjection) itemAddedToWishlistEventType2Listener() {
 
 func (cp *WishlistProjection) applyItemAddedV1(payloadJSON []byte) {
 	log.Println("Item added to wishlist v1")
-	var payload add_item.ItemAddedToWishlistEventV1
+	var payload events.ItemAddedToWishlistEventV1
 	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return
@@ -110,7 +110,7 @@ func (cp *WishlistProjection) applyItemAddedV1(payloadJSON []byte) {
 
 func (cp *WishlistProjection) applyItemAddedV2(payloadJSON []byte) {
 	log.Println("Item added to wishlist v2")
-	var payload add_item.ItemAddedToWishlistEventV2
+	var payload events.ItemAddedToWishlistEventV2
 	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return

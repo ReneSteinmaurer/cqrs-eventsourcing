@@ -1,3 +1,3 @@
 package wishlist
 
-var AggregateId = "wishlist"
+var AggregateType = "wishlist"

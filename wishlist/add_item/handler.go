@@ -4,10 +4,11 @@ import (
 	"context"
 	"cqrs-playground/shared"
 	"cqrs-playground/wishlist"
+	"cqrs-playground/wishlist/events"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/IBM/sarama"
+	"strconv"
 )
 
 type AddItemHandler struct {
@@ -37,7 +38,7 @@ func (a *AddItemHandler) HandleV1(cmd AddItemToWishlistCommandV1) error {
 		return errors.New("item cannot be empty string")
 	}
 
-	payload := ItemAddedToWishlistEventV1{
+	payload := events.ItemAddedToWishlistEventV1{
 		WishlistId: cmd.WishlistId,
 		Item:       cmd.Item,
 	}
@@ -47,18 +48,23 @@ func (a *AddItemHandler) HandleV1(cmd AddItemToWishlistCommandV1) error {
 		return err
 	}
 
-	version, err := a.eventStore.LoadCurrentVersion(a.ctx, wishlist.AggregateId)
+	version, err := a.eventStore.LoadCurrentVersion(a.ctx, strconv.Itoa(cmd.WishlistId), wishlist.AggregateType)
 	if err != nil {
 		panic(err)
 	}
 
-	event := shared.NewEvent(wishlist.AggregateId, ItemAddedToWishlistEventTypeV1, version+1, payloadJSON)
+	event := shared.NewEvent(
+		wishlist.AggregateType,
+		strconv.Itoa(cmd.WishlistId),
+		events.ItemAddedToWishlistEventTypeV1,
+		version+1, payloadJSON)
+
 	err = a.eventStore.Save(a.ctx, event)
 	if err != nil {
 		return err
 	}
 
-	err = a.kafkaService.SendEvent(a.producer, ItemAddedToWishlistEventTypeV1, payloadJSON)
+	err = a.kafkaService.SendEvent(a.producer, events.ItemAddedToWishlistEventTypeV1, payloadJSON)
 	if err != nil {
 		panic(err)
 	}
@@ -66,6 +72,8 @@ func (a *AddItemHandler) HandleV1(cmd AddItemToWishlistCommandV1) error {
 }
 
 func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
+	var aggregateKey = strconv.Itoa(cmd.WishlistId)
+	var aggregateType = wishlist.AggregateType
 	if cmd.WishlistId < 0 {
 		return errors.New("wishlist id cannot be negative")
 	}
@@ -77,16 +85,27 @@ func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
 	}
 
 	return shared.RetryHandlerLogic(func() error {
-		aggregateId := aggregateIdForWishlist(cmd.WishlistId)
-		version, err := a.eventStore.LoadCurrentVersion(a.ctx, aggregateId)
+		aggregateEvents, err := a.eventStore.GetEventsByAggregateId(a.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err
 		}
 
-		payload := ItemAddedToWishlistEventV2{
+		wishlistAggregate := wishlist.NewWishlistAggregateFrom(aggregateEvents)
+
+		version, err := a.eventStore.LoadCurrentVersion(a.ctx, aggregateKey, aggregateType)
+		if err != nil {
+			return err
+		}
+
+		payload := events.ItemAddedToWishlistEventV2{
 			WishlistId: cmd.WishlistId,
 			Item:       cmd.Item,
 			UserId:     cmd.UserId,
+		}
+
+		err = wishlistAggregate.HandleAddItem(payload)
+		if err != nil {
+			return err
 		}
 
 		payloadJSON, err := json.Marshal(payload)
@@ -94,19 +113,20 @@ func (a *AddItemHandler) HandleV2(cmd AddItemToWishlistCommandV2) error {
 			return err
 		}
 
-		event := shared.NewEvent(aggregateId, ItemAddedToWishlistEventTypeV2, version+1, payloadJSON)
+		event := shared.NewEvent(
+			aggregateType,
+			aggregateKey,
+			events.ItemAddedToWishlistEventTypeV2,
+			version+1, payloadJSON)
+
 		err = a.eventStore.Save(a.ctx, event)
 		if err != nil {
 			return err
 		}
-		err = a.kafkaService.SendEvent(a.producer, ItemAddedToWishlistEventTypeV2, payloadJSON)
+		err = a.kafkaService.SendEvent(a.producer, events.ItemAddedToWishlistEventTypeV2, payloadJSON)
 		if err != nil {
 			panic(err)
 		}
 		return nil
 	})
-}
-
-func aggregateIdForWishlist(id int) string {
-	return fmt.Sprintf("%s-%d", wishlist.AggregateId, id)
 }

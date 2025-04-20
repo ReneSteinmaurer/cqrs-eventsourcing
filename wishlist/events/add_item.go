@@ -1,4 +1,4 @@
-package add_item
+package events
 
 type ItemAddedToWishlistEventV1 struct {
 	WishlistId int
