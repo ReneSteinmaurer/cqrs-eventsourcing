@@ -35,12 +35,6 @@ func NewWishlistProjection(
 	}
 }
 
-func (cp *WishlistProjection) Start() {
-	go cp.listenToEvent(events.ItemAddedToWishlistEventTypeV1, cp.applyItemAddedV1)
-	go cp.listenToEvent(events.ItemAddedToWishlistEventTypeV2, cp.applyItemAddedV2)
-	go cp.listenToEvent(events.ItemRemovedFromWishlistTypeV1, cp.applyItemRemovedV1)
-}
-
 func (cp *WishlistProjection) listenToEvent(eventType string, applyFunc func([]byte)) {
 	consumer := cp.KafkaService.NewConsumerOffsetNewest(eventType)
 	defer func() {
@@ -59,6 +53,12 @@ func (cp *WishlistProjection) listenToEvent(eventType string, applyFunc func([]b
 			applyFunc(msg.Value)
 		}
 	}
+}
+
+func (cp *WishlistProjection) Start() {
+	go cp.listenToEvent(events.ItemAddedToWishlistEventTypeV1, cp.applyItemAddedV1)
+	go cp.listenToEvent(events.ItemAddedToWishlistEventTypeV2, cp.applyItemAddedV2)
+	go cp.listenToEvent(events.ItemRemovedFromWishlistTypeV1, cp.applyItemRemovedV1)
 }
 
 func (cp *WishlistProjection) applyItemAddedV1(payloadJSON []byte) {

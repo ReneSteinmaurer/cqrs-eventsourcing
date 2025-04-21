@@ -1,0 +1,103 @@
+package bestand_projection
+
+import (
+	"context"
+	shared2 "cqrs-playground/bibliothek/medien/shared"
+	"cqrs-playground/shared"
+	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"log"
+)
+
+type MedienProjection struct {
+	EventStore   *shared.EventStore
+	DB           *pgxpool.Pool
+	KafkaService *shared.KafkaService
+	ctx          context.Context
+	cancel       context.CancelFunc
+}
+
+func NewMediumBestandProjection(
+	ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool,
+	kafkaService *shared.KafkaService,
+) *MedienProjection {
+	ctx, cancel := context.WithCancel(ctx)
+	return &MedienProjection{
+		ctx:          ctx,
+		cancel:       cancel,
+		EventStore:   eventStore,
+		DB:           db,
+		KafkaService: kafkaService,
+	}
+}
+
+func (cp *MedienProjection) listenToEvent(eventType string, applyFunc func([]byte)) {
+	consumer := cp.KafkaService.NewConsumerOffsetNewest(eventType)
+	defer func() {
+		log.Printf("Closing consumer for %s...\n", eventType)
+		_ = consumer.Close()
+	}()
+
+	msgs := consumer.Messages()
+
+	for {
+		select {
+		case <-cp.ctx.Done():
+			log.Printf("%s listener stopped\n", eventType)
+			return
+		case msg := <-msgs:
+			applyFunc(msg.Value)
+		}
+	}
+}
+
+func (cp *MedienProjection) Start() {
+	go cp.listenToEvent(shared2.MediumErworbenEventType, cp.applyMediumErworben)
+	go cp.listenToEvent(shared2.MediumKatalogisiertEventType, cp.applyMediumKatalogisiert)
+}
+
+func (cp *MedienProjection) applyMediumErworben(payloadJSON []byte) {
+	var payload shared2.MediumErworbenEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		insert into medium_bestand (medium_id, isbn, medium_type, name, genre)
+        values ($1, $2, $3, $4, $5)
+		on conflict do nothing 
+	`
+
+	_, err := cp.DB.Exec(cp.ctx, query, payload.MediumId, payload.ISBN, payload.MediumType, payload.Name, payload.Genre)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+	}
+}
+
+func (cp *MedienProjection) applyMediumKatalogisiert(payloadJSON []byte) {
+	var payload shared2.MediumKatalogisiertEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		update medium_bestand
+		set
+			signature = $2,
+			standort = $3,
+			exemplar_code = $4
+		where medium_id = $1
+	`
+
+	_, err := cp.DB.Exec(cp.ctx, query,
+		payload.MediumId,
+		payload.Signature,
+		payload.Standort,
+		payload.ExemplarCode,
+	)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+	}
+}

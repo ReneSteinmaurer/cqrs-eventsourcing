@@ -53,7 +53,7 @@ func (k *KafkaService) SendEvent(producer sarama.SyncProducer, topic string, mes
 		return err
 	}
 
-	log.Printf("message sent successfully! partition=%d, offset=%d\n", partition, offset)
+	log.Printf("message sent successfully! topic=%s partition=%d, offset=%d\n", topic, partition, offset)
 	return nil
 }
 
