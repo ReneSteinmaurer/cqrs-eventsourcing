@@ -1,5 +1,12 @@
 body {
   background-color: #101414;
+  height: 100vh;
+  width: 100vw;
+}
+
+.ag-theme-alpine {
+  min-height: 500px;
+  height: 500px;
 }
 
 h1 {

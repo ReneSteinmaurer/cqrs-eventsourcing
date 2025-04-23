@@ -7,14 +7,14 @@ import (
 )
 
 type MediumBestand struct {
-	MediumId     string            `db:"medium_id"`
-	ISBN         string            `db:"isbn"`
-	MediumType   shared.MediumType `db:"medium_type"`
-	Name         string            `db:"name"`
-	Genre        string            `db:"genre"`
-	Signature    string            `db:"signature"`
-	Standort     string            `db:"standort"`
-	ExemplarCode string            `db:"exemplar_code"`
+	MediumId     string            `db:"medium_id" json:"mediumId"`
+	ISBN         string            `db:"isbn" json:"ISBN"`
+	MediumType   shared.MediumType `db:"medium_type" json:"mediumType"`
+	Name         string            `db:"name" json:"name"`
+	Genre        string            `db:"genre" json:"genre"`
+	Signature    string            `db:"signature" json:"signature"`
+	Standort     string            `db:"standort" json:"standort"`
+	ExemplarCode string            `db:"exemplar_code" json:"exemplarCode"`
 }
 
 type MediumBestandReader struct {
@@ -35,4 +35,40 @@ func (r *MediumBestandReader) GetByMediumId(ctx context.Context, mediumId string
 		return nil, err
 	}
 	return &medium, nil
+}
+
+func (r *MediumBestandReader) GetAll(ctx context.Context) ([]MediumBestand, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT medium_id, isbn, medium_type, name, genre, signature, standort, exemplar_code
+		FROM medium_bestand
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []MediumBestand
+	for rows.Next() {
+		var medium MediumBestand
+		err := rows.Scan(
+			&medium.MediumId,
+			&medium.ISBN,
+			&medium.MediumType,
+			&medium.Name,
+			&medium.Genre,
+			&medium.Signature,
+			&medium.Standort,
+			&medium.ExemplarCode,
+		)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, medium)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return result, nil
 }

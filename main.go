@@ -69,17 +69,38 @@ func main() {
 		verleiheMediumHandler,
 		rueckgabeMediumHandler)
 
-	http.HandleFunc("/cart/add-item", cartApi.AddItem)
-	http.HandleFunc("/cart/remove-item", cartApi.RemoveItem)
-	http.HandleFunc("/wishlist/add-item", wishlistApi.AddItem)
-	http.HandleFunc("/wishlist/remove-item", wishlistApi.RemoveItem)
+	mediumBestandAPI := rest.NewMediumBestandAPI(db.Pool)
 
-	http.HandleFunc("/bibliothek/registriere-nutzer", nutzerRegistrierungApi.RegistriereNutzer)
-	http.HandleFunc("/bibliothek/erwerbe-medium", erwerbeMediumAPI.ErwerbeMedium)
-	http.HandleFunc("/bibliothek/katalogisiere-medium", erwerbeMediumAPI.KatalogisiereMedium)
-	http.HandleFunc("/bibliothek/verleihe-medium", erwerbeMediumAPI.VerleiheMedium)
-	http.HandleFunc("/bibliothek/gebe-medium-zurueck", erwerbeMediumAPI.GebeMediumZurueck)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/cart/add-item", cartApi.AddItem)
+	mux.HandleFunc("/cart/remove-item", cartApi.RemoveItem)
+	mux.HandleFunc("/wishlist/add-item", wishlistApi.AddItem)
+	mux.HandleFunc("/wishlist/remove-item", wishlistApi.RemoveItem)
+
+	mux.HandleFunc("/bibliothek/registriere-nutzer", nutzerRegistrierungApi.RegistriereNutzer)
+	mux.HandleFunc("/bibliothek/erwerbe-medium", erwerbeMediumAPI.ErwerbeMedium)
+	mux.HandleFunc("/bibliothek/katalogisiere-medium", erwerbeMediumAPI.KatalogisiereMedium)
+	mux.HandleFunc("/bibliothek/verleihe-medium", erwerbeMediumAPI.VerleiheMedium)
+	mux.HandleFunc("/bibliothek/gebe-medium-zurueck", erwerbeMediumAPI.GebeMediumZurueck)
+
+	mux.HandleFunc("/bibliothek/bestand", mediumBestandAPI.GetAll)
+	corsWrapped := withCORS(mux)
 
 	log.Println("Server started at :8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", corsWrapped)
+}
+
+func withCORS(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
