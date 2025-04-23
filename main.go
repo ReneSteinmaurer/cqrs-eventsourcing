@@ -8,6 +8,7 @@ import (
 	"cqrs-playground/bibliothek/medien/erwerben"
 	"cqrs-playground/bibliothek/medien/isbn_index_projection"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
+	"cqrs-playground/bibliothek/medien/rueckgeben"
 	"cqrs-playground/bibliothek/medien/verliehen_projection"
 	"cqrs-playground/bibliothek/nutzer/registrierung"
 	db2 "cqrs-playground/db"
@@ -61,7 +62,12 @@ func main() {
 	erwerbeMediumHandler := erwerben.NewErwerbeMediumHandler(ctx, &eventStore, kafkaService, db.Pool)
 	katalogisiereMediumHandler := katalogisieren.NewKatalogisiereMediumHandler(ctx, &eventStore, kafkaService)
 	verleiheMediumHandler := ausleihen.NewVerleiheMediumHandler(ctx, &eventStore, kafkaService, db.Pool)
-	erwerbeMediumAPI := rest.NewErwerbeMediumAPI(erwerbeMediumHandler, katalogisiereMediumHandler, verleiheMediumHandler)
+	rueckgabeMediumHandler := rueckgeben.NewMediumRueckgabeHandler(ctx, &eventStore, kafkaService, db.Pool)
+	erwerbeMediumAPI := rest.NewErwerbeMediumAPI(
+		erwerbeMediumHandler,
+		katalogisiereMediumHandler,
+		verleiheMediumHandler,
+		rueckgabeMediumHandler)
 
 	http.HandleFunc("/cart/add-item", cartApi.AddItem)
 	http.HandleFunc("/cart/remove-item", cartApi.RemoveItem)
@@ -72,6 +78,7 @@ func main() {
 	http.HandleFunc("/bibliothek/erwerbe-medium", erwerbeMediumAPI.ErwerbeMedium)
 	http.HandleFunc("/bibliothek/katalogisiere-medium", erwerbeMediumAPI.KatalogisiereMedium)
 	http.HandleFunc("/bibliothek/verleihe-medium", erwerbeMediumAPI.VerleiheMedium)
+	http.HandleFunc("/bibliothek/gebe-medium-zurueck", erwerbeMediumAPI.GebeMediumZurueck)
 
 	log.Println("Server started at :8080")
 	http.ListenAndServe(":8080", nil)

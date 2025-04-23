@@ -53,6 +53,7 @@ func (mv *MediumVerliehenProjection) listenToEvent(eventType string, applyFunc f
 
 func (mv *MediumVerliehenProjection) Start() {
 	go mv.listenToEvent(shared2.MediumVerliehenEventType, mv.applyMediumVerliehen)
+	go mv.listenToEvent(shared2.MediumZurueckgegebenEventType, mv.applyMediumZurueckgegeben)
 }
 
 func (mv *MediumVerliehenProjection) applyMediumVerliehen(payloadJSON []byte) {
@@ -69,6 +70,23 @@ func (mv *MediumVerliehenProjection) applyMediumVerliehen(payloadJSON []byte) {
 	`
 
 	_, err := mv.DB.Exec(mv.ctx, query, payload.MediumId, payload.Von, payload.Bis, payload.NutzerId)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+	}
+}
+
+func (mv *MediumVerliehenProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
+	var payload shared2.MediumZurueckgegebenEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		delete from medium_verliehen where medium_id = $1 and nutzer_id = $2;
+	`
+
+	_, err := mv.DB.Exec(mv.ctx, query, payload.MediumId, payload.NutzerId)
 	if err != nil {
 		log.Println("Error updating read-model:", err)
 	}

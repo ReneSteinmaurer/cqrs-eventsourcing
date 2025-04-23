@@ -71,13 +71,13 @@ func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) error {
 	})
 }
 
-func (k *VerleiheMediumHandler) SendEvent(payload shared2.MediumVerliehenEvent, aggregateKey, aggregateType string) error {
+func (v *VerleiheMediumHandler) SendEvent(payload shared2.MediumVerliehenEvent, aggregateKey, aggregateType string) error {
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	version, err := k.eventStore.LoadCurrentVersion(k.ctx, aggregateKey, aggregateType)
+	version, err := v.eventStore.LoadCurrentVersion(v.ctx, aggregateKey, aggregateType)
 	if err != nil {
 		return err
 	}
@@ -89,11 +89,11 @@ func (k *VerleiheMediumHandler) SendEvent(payload shared2.MediumVerliehenEvent, 
 		version+1,
 		payloadJSON)
 
-	err = k.eventStore.Save(k.ctx, event)
+	err = v.eventStore.Save(v.ctx, event)
 	if err != nil {
 		return err
 	}
-	err = k.kafkaService.SendEvent(k.producer, shared2.MediumVerliehenEventType, payloadJSON)
+	err = v.kafkaService.SendEvent(v.producer, shared2.MediumVerliehenEventType, payloadJSON)
 	if err != nil {
 		panic(err)
 	}

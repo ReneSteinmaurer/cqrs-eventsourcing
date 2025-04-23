@@ -4,6 +4,7 @@ import (
 	"cqrs-playground/bibliothek/medien/ausleihen"
 	"cqrs-playground/bibliothek/medien/erwerben"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
+	"cqrs-playground/bibliothek/medien/rueckgeben"
 	"encoding/json"
 	"net/http"
 )
@@ -12,17 +13,20 @@ type MediumHandlerAPI struct {
 	ErwerbeMediumHandler       *erwerben.ErwerbeMediumHandler
 	KatalogisiereMediumHandler *katalogisieren.KatalogisiereMediumHandler
 	VerleiheMediumHandler      *ausleihen.VerleiheMediumHandler
+	RueckgebenMediumHandler    *rueckgeben.MediumRueckgabeHandler
 }
 
 func NewErwerbeMediumAPI(
 	erwerbeMediumHandler *erwerben.ErwerbeMediumHandler,
 	katalogisiereMediumHandler *katalogisieren.KatalogisiereMediumHandler,
 	verleiheMediumHandler *ausleihen.VerleiheMediumHandler,
+	rueckgebenMediumHandler *rueckgeben.MediumRueckgabeHandler,
 ) *MediumHandlerAPI {
 	return &MediumHandlerAPI{
 		ErwerbeMediumHandler:       erwerbeMediumHandler,
 		KatalogisiereMediumHandler: katalogisiereMediumHandler,
 		VerleiheMediumHandler:      verleiheMediumHandler,
+		RueckgebenMediumHandler:    rueckgebenMediumHandler,
 	}
 }
 
@@ -40,7 +44,7 @@ func (api *MediumHandlerAPI) ErwerbeMedium(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"status": "neues medium hinzugefuegt"})
+	json.NewEncoder(w).Encode(map[string]string{"status": "neues medium hinzugefügt"})
 }
 
 func (api *MediumHandlerAPI) KatalogisiereMedium(w http.ResponseWriter, r *http.Request) {
@@ -75,4 +79,21 @@ func (api *MediumHandlerAPI) VerleiheMedium(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"status": "medium verliehen"})
+}
+
+func (api *MediumHandlerAPI) GebeMediumZurueck(w http.ResponseWriter, r *http.Request) {
+	var cmd rueckgeben.MediumRueckgebenCommand
+
+	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := api.RueckgebenMediumHandler.Handle(cmd); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"status": "medium zurueckgegeben"})
 }

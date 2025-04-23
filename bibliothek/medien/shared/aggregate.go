@@ -49,6 +49,12 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 		m.VerliehenVon = &e.Von
 		m.VerliehenBis = &e.Bis
 		m.VerliehenAnNutzerId = e.NutzerId
+	case MediumZurueckgegebenEventType:
+		var e MediumZurueckgegebenEvent
+		_ = json.Unmarshal(event.Payload, &e)
+		m.VerliehenVon = nil
+		m.VerliehenBis = nil
+		m.VerliehenAnNutzerId = ""
 	}
 }
 
@@ -71,6 +77,23 @@ func (m *MediumAggregate) HandleMediumVerleihen(event MediumVerliehenEvent) erro
 	}
 	if m.isVerliehen() {
 		return errors.New("das Medium wurde bereits verliehen und ist nicht verfügbar")
+	}
+
+	return nil
+}
+
+func (m *MediumAggregate) HandleMediumZurueckgegeben(event MediumZurueckgegebenEvent) error {
+	if m.MediumId != event.MediumId {
+		return errors.New("es gibt noch kein Medium mit dieser Id im System")
+	}
+	if !m.isKatalogisiert() {
+		return errors.New("das Medium ist noch nicht katalogisiert")
+	}
+	if m.VerliehenAnNutzerId != event.NutzerId {
+		return errors.New("dieser nutzer hat das medium nicht ausgeliehen")
+	}
+	if !m.isVerliehen() {
+		return errors.New("das Medium ist derzeit nicht verliehen")
 	}
 
 	return nil
