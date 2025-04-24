@@ -11,6 +11,7 @@ type MediumType string
 const (
 	MediumTypBuch        MediumType = "BUCH"
 	MediumTypDVD         MediumType = "DVD"
+	MediumTypeCD         MediumType = "CD"
 	MediumTypZeitschrift MediumType = "ZEITSCHRIFT"
 	MediumTypEBook       MediumType = "EBOOK"
 )
@@ -22,7 +23,7 @@ func (m *MediumType) UnmarshalJSON(b []byte) error {
 	}
 
 	switch MediumType(strings.ToUpper(s)) {
-	case MediumTypBuch, MediumTypDVD, MediumTypZeitschrift, MediumTypEBook:
+	case MediumTypBuch, MediumTypeCD, MediumTypDVD, MediumTypZeitschrift, MediumTypEBook:
 		*m = MediumType(strings.ToUpper(s))
 		return nil
 	default:

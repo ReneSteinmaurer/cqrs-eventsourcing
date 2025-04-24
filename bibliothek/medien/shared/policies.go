@@ -20,6 +20,8 @@ func (p *StandardLeihregelPolicy) DauerFuer(mediumTyp MediumType) time.Duration 
 		return 21 * 24 * time.Hour // 3 Wochen
 	case MediumTypDVD:
 		return 7 * 24 * time.Hour // 1 Woche
+	case MediumTypeCD:
+		return 7 * 24 * time.Hour // 1
 	case MediumTypZeitschrift:
 		return 14 * 24 * time.Hour // 2 Wochen
 	case MediumTypEBook:

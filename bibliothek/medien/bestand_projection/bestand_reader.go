@@ -39,7 +39,14 @@ func (r *MediumBestandReader) GetByMediumId(ctx context.Context, mediumId string
 
 func (r *MediumBestandReader) GetAll(ctx context.Context) ([]MediumBestand, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT medium_id, isbn, medium_type, name, genre, signature, standort, exemplar_code
+		SELECT medium_id, 
+			isbn,
+			medium_type,
+			name,
+			genre,
+			coalesce(signature, '')    AS signature,
+			coalesce(standort, '')     AS standort,
+			coalesce(exemplar_code, '') AS exemplar_code
 		FROM medium_bestand
 	`)
 	if err != nil {

@@ -9,6 +9,7 @@ import {
   themeAlpine
 } from 'ag-grid-community';
 import { LandingPageService } from './landing-page.service';
+import {KatalogisiereIconRendererComponent} from './katalogisiere-icon-renderer/katalogisiere-icon-renderer.component';
 
 ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
 const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "#00fbfb"})
@@ -23,10 +24,11 @@ const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "
     <div class="flex bg-[#004f4f] p-4 justify-center items-center">
       <h1 class="flex">Startseite</h1>
     </div>
-    <div class="flex w-full flex-col items-center">
+    <h3 class="flex justify-center items-center mt-8">Bestand</h3>
+    <div class="flex m-4 justify-center items-center">
       <ag-grid-angular
-        style="width: 100%; height: 100%;"
-        domLayout="autoHeight"
+        class="w-full h-[50vh]"
+        domLayout="normal"
         [defaultColDef]="defaultColDef"
         [theme]="myTheme"
         [rowData]="landingPageService.medien()"
@@ -56,15 +58,27 @@ export class LandingPageComponent {
     {field: 'signature', headerName: 'Signatur'},
     {field: 'standort', headerName: 'Bibliothek'},
     {field: 'exemplarCode', headerName: 'Exemplar-ID'},
+    {
+      headerName: 'Katalogisieren',
+      cellRenderer: KatalogisiereIconRendererComponent,
+      pinned: 'right',
+      width: 150,
+      minWidth: 90,
+      maxWidth: 150,
+      cellStyle: {
+        border: 'none',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+    },
   ];
 
   defaultColDef: ColDef = {
     autoHeight: true,
-    suppressAutoSize: false,
-    suppressSizeToFit: false,
     sortable: true,
     filter: true,
-    resizable: true,
+    resizable: false,
   };
 
   protected readonly myTheme = myTheme;
