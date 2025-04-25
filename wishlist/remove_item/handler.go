@@ -43,7 +43,7 @@ func (a *RemoveItemHandler) HandleV1(cmd RemoveItemFromWishlistCommandV1) error 
 		return errors.New("userId cannot be empty string")
 	}
 
-	return shared.RetryHandlerLogic(func() error {
+	return shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := a.eventStore.GetEventsByAggregateId(a.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err

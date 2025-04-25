@@ -1,4 +1,8 @@
-package shared
+package events
+
+const (
+	MediumKatalogisiertEventType = "MediumKatalogisiertEvent"
+)
 
 type MediumKatalogisiertEvent struct {
 	MediumId     string
@@ -15,5 +19,3 @@ func NewMediumKatalogisiertEvent(mediumId, signature, standort, exemplarCode str
 		ExemplarCode: exemplarCode,
 	}
 }
-
-var MediumKatalogisiertEventType = "MediumKatalogisiertEvent"

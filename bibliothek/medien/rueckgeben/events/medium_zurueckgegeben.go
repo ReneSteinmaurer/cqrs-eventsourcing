@@ -1,6 +1,10 @@
-package shared
+package events
 
 import "time"
+
+const (
+	MediumZurueckgegebenEventType = "MediumZurueckgegebenEvent"
+)
 
 type MediumZurueckgegebenEvent struct {
 	MediumId string
@@ -15,5 +19,3 @@ func NewMediumZurueckgegebenEvent(mediumId, nutzerId string, date time.Time) Med
 		Date:     date,
 	}
 }
-
-var MediumZurueckgegebenEventType = "MediumZurueckgegebenEvent"

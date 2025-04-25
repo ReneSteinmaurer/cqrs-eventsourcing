@@ -2,7 +2,8 @@ package erwerben
 
 import (
 	"context"
-	"cqrs-playground/bibliothek/medien/isbn_index_projection"
+	"cqrs-playground/bibliothek/medien/erwerben/events"
+	"cqrs-playground/bibliothek/medien/projections/isbn_index"
 	shared2 "cqrs-playground/bibliothek/medien/shared"
 	"cqrs-playground/shared"
 	"encoding/json"
@@ -17,7 +18,7 @@ type ErwerbeMediumHandler struct {
 	eventStore      *shared.EventStore
 	kafkaService    *shared.KafkaService
 	producer        sarama.SyncProducer
-	isbnIndexReader *isbn_index_projection.ISBNIndexReader
+	isbnIndexReader *isbn_index.ISBNIndexReader
 	ctx             context.Context
 }
 
@@ -25,7 +26,7 @@ func NewErwerbeMediumHandler(
 	ctx context.Context, eventStore *shared.EventStore, kafkaService *shared.KafkaService, db *pgxpool.Pool,
 ) *ErwerbeMediumHandler {
 	producer := kafkaService.NewSyncProducer()
-	isbnIndexReader := isbn_index_projection.NewPostgresISBNIndexReader(db)
+	isbnIndexReader := isbn_index.NewPostgresISBNIndexReader(db)
 	return &ErwerbeMediumHandler{
 		eventStore:      eventStore,
 		kafkaService:    kafkaService,
@@ -49,13 +50,13 @@ func (n *ErwerbeMediumHandler) Handle(cmd ErwerbeMediumCommand) error {
 		return errors.New("medium mit dieser ISBN existiert bereits")
 	}
 
-	return shared.RetryHandlerLogic(func() error {
+	return shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := n.eventStore.GetEventsByAggregateId(n.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err
 		}
 
-		payload := shared2.NewMediumErworbenEvent(cmd.ISBN, aggregateKey, cmd.Name, cmd.Genre, cmd.MediumType)
+		payload := events.NewMediumErworbenEvent(cmd.ISBN, aggregateKey, cmd.Name, cmd.Genre, cmd.MediumType)
 
 		aggregate := shared2.NewMediumAggregate(aggregateEvents)
 		err = aggregate.HandleMediumErwerben(payload)
@@ -67,7 +68,7 @@ func (n *ErwerbeMediumHandler) Handle(cmd ErwerbeMediumCommand) error {
 	})
 }
 
-func (n *ErwerbeMediumHandler) SendEvent(payload shared2.MediumErworbenEvent, aggregateKey, aggregateType string) error {
+func (n *ErwerbeMediumHandler) SendEvent(payload events.MediumErworbenEvent, aggregateKey, aggregateType string) error {
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -81,7 +82,7 @@ func (n *ErwerbeMediumHandler) SendEvent(payload shared2.MediumErworbenEvent, ag
 	event := shared.NewEvent(
 		aggregateType,
 		aggregateKey,
-		shared2.MediumErworbenEventType,
+		events.MediumErworbenEventType,
 		version+1,
 		payloadJSON)
 
@@ -89,7 +90,7 @@ func (n *ErwerbeMediumHandler) SendEvent(payload shared2.MediumErworbenEvent, ag
 	if err != nil {
 		return err
 	}
-	err = n.kafkaService.SendEvent(n.producer, shared2.MediumErworbenEventType, payloadJSON)
+	err = n.kafkaService.SendEvent(n.producer, events.MediumErworbenEventType, payloadJSON)
 	if err != nil {
 		panic(err)
 	}

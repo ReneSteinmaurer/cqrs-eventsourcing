@@ -2,7 +2,8 @@ package ausleihen
 
 import (
 	"context"
-	"cqrs-playground/bibliothek/medien/bestand_projection"
+	"cqrs-playground/bibliothek/medien/ausleihen/events"
+	"cqrs-playground/bibliothek/medien/projections/bestand"
 	shared2 "cqrs-playground/bibliothek/medien/shared"
 	"cqrs-playground/shared"
 	"encoding/json"
@@ -16,8 +17,8 @@ type VerleiheMediumHandler struct {
 	eventStore          *shared.EventStore
 	kafkaService        *shared.KafkaService
 	producer            sarama.SyncProducer
-	mediumBestandReader *bestand_projection.MediumBestandReader
-	leihregel           shared2.LeihregelPolicy
+	mediumBestandReader *bestand.MediumBestandReader
+	leihregel           LeihregelPolicy
 	ctx                 context.Context
 }
 
@@ -25,13 +26,13 @@ func NewVerleiheMediumHandler(
 	ctx context.Context, eventStore *shared.EventStore, kafkaService *shared.KafkaService, db *pgxpool.Pool,
 ) *VerleiheMediumHandler {
 	producer := kafkaService.NewSyncProducer()
-	mbr := bestand_projection.NewMediumBestandReader(db)
+	mbr := bestand.NewMediumBestandReader(db)
 	return &VerleiheMediumHandler{
 		eventStore:          eventStore,
 		kafkaService:        kafkaService,
 		producer:            producer,
 		mediumBestandReader: mbr,
-		leihregel:           shared2.NewStandardLeihregelPolicy(),
+		leihregel:           NewStandardLeihregelPolicy(),
 		ctx:                 ctx,
 	}
 }
@@ -53,7 +54,7 @@ func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) error {
 	von := time.Now()
 	bis := von.Add(dur)
 
-	return shared.RetryHandlerLogic(func() error {
+	return shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := v.eventStore.GetEventsByAggregateId(v.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err
@@ -61,7 +62,7 @@ func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) error {
 
 		aggregate := shared2.NewMediumAggregate(aggregateEvents)
 
-		payload := shared2.NewMediumVerliehenEvent(cmd.MediumId, cmd.NutzerId, von, bis)
+		payload := events.NewMediumVerliehenEvent(cmd.MediumId, cmd.NutzerId, von, bis)
 		err = aggregate.HandleMediumVerleihen(payload)
 		if err != nil {
 			return err
@@ -71,7 +72,7 @@ func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) error {
 	})
 }
 
-func (v *VerleiheMediumHandler) SendEvent(payload shared2.MediumVerliehenEvent, aggregateKey, aggregateType string) error {
+func (v *VerleiheMediumHandler) SendEvent(payload events.MediumVerliehenEvent, aggregateKey, aggregateType string) error {
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -85,7 +86,7 @@ func (v *VerleiheMediumHandler) SendEvent(payload shared2.MediumVerliehenEvent, 
 	event := shared.NewEvent(
 		aggregateType,
 		aggregateKey,
-		shared2.MediumVerliehenEventType,
+		events.MediumVerliehenEventType,
 		version+1,
 		payloadJSON)
 
@@ -93,7 +94,7 @@ func (v *VerleiheMediumHandler) SendEvent(payload shared2.MediumVerliehenEvent, 
 	if err != nil {
 		return err
 	}
-	err = v.kafkaService.SendEvent(v.producer, shared2.MediumVerliehenEventType, payloadJSON)
+	err = v.kafkaService.SendEvent(v.producer, events.MediumVerliehenEventType, payloadJSON)
 	if err != nil {
 		panic(err)
 	}

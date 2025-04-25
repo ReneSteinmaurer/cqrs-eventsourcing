@@ -1,10 +1,12 @@
 package erwerben
 
-import "cqrs-playground/bibliothek/medien/shared"
+import (
+	"cqrs-playground/bibliothek/medien/erwerben/events"
+)
 
 type ErwerbeMediumCommand struct {
 	ISBN       string
-	MediumType shared.MediumType
+	MediumType events.MediumType
 	Name       string
 	Genre      string
 }

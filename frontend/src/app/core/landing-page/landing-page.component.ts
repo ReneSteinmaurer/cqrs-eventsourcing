@@ -8,8 +8,10 @@ import {
   ModuleRegistry,
   themeAlpine
 } from 'ag-grid-community';
-import { LandingPageService } from './landing-page.service';
+import {LandingPageService} from './landing-page.service';
 import {KatalogisiereIconRendererComponent} from './katalogisiere-icon-renderer/katalogisiere-icon-renderer.component';
+import {MatDialog, MatDialogModule} from '@angular/material/dialog';
+import {KatalogisiereMediumDialogComponent} from './katalogisiere-medium-dialog/katalogisiere-medium-dialog.component';
 
 ModuleRegistry.registerModules([AllCommunityModule, ClientSideRowModelModule]);
 const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "#00fbfb"})
@@ -18,7 +20,8 @@ const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "
   selector: 'app-landing-page',
   imports: [
     AgGridModule,
-    AgGridAngular
+    AgGridAngular,
+    MatDialogModule
   ],
   template: `
     <div class="flex bg-[#004f4f] p-4 justify-center items-center">
@@ -44,6 +47,7 @@ const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "
 })
 export class LandingPageComponent {
   landingPageService = inject(LandingPageService);
+  dialog = inject(MatDialog);
 
   constructor() {
     this.landingPageService.getAllMedien()
@@ -60,7 +64,16 @@ export class LandingPageComponent {
     {field: 'exemplarCode', headerName: 'Exemplar-ID'},
     {
       headerName: 'Katalogisieren',
-      cellRenderer: KatalogisiereIconRendererComponent,
+      cellRendererSelector: (params) => {
+        return params.data && !params.data.katalogisiert
+          ? {
+            component: KatalogisiereIconRendererComponent,
+          }
+          : undefined;
+      },
+      onCellClicked: (params) => {
+        this.openKatalogisierenDialog(params.data.mediumId)
+      },
       pinned: 'right',
       width: 150,
       minWidth: 90,
@@ -80,6 +93,16 @@ export class LandingPageComponent {
     filter: true,
     resizable: false,
   };
+
+  openKatalogisierenDialog(mediumId: string) {
+    this.dialog.open(KatalogisiereMediumDialogComponent, {
+      width: '70%',
+      height: '70%',
+      data: {
+        mediumId
+      }
+    })
+  }
 
   protected readonly myTheme = myTheme;
 }

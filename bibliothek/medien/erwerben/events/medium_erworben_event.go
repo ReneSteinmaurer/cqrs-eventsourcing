@@ -1,4 +1,8 @@
-package shared
+package events
+
+const (
+	MediumErworbenEventType = "MediumErworbenEvent"
+)
 
 type MediumErworbenEvent struct {
 	ISBN       string
@@ -17,5 +21,3 @@ func NewMediumErworbenEvent(isbn, mediumId, name, genre string, mediumType Mediu
 		Genre:      genre,
 	}
 }
-
-var MediumErworbenEventType = "MediumErworbenEvent"

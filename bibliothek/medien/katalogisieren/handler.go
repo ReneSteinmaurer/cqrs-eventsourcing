@@ -2,6 +2,7 @@ package katalogisieren
 
 import (
 	"context"
+	"cqrs-playground/bibliothek/medien/katalogisieren/events"
 	shared2 "cqrs-playground/bibliothek/medien/shared"
 	"cqrs-playground/shared"
 	"encoding/json"
@@ -28,15 +29,15 @@ func NewKatalogisiereMediumHandler(
 	}
 }
 
-func (k *KatalogisiereMediumHandler) Handle(cmd KatalogisiereMediumCommand) error {
+func (k *KatalogisiereMediumHandler) Handle(cmd KatalogisiereMediumCommand) (string, error) {
 	aggregateKey := cmd.MediumId
 	aggregateType := shared2.MediumAggregateType
 
 	if cmd.MediumId == "" || cmd.Signature == "" {
-		return errors.New("alle Felder müssen befüllt sein")
+		return "", errors.New("alle Felder müssen befüllt sein")
 	}
 
-	return shared.RetryHandlerLogic(func() error {
+	return aggregateKey, shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := k.eventStore.GetEventsByAggregateId(k.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err
@@ -44,7 +45,7 @@ func (k *KatalogisiereMediumHandler) Handle(cmd KatalogisiereMediumCommand) erro
 
 		aggregate := shared2.NewMediumAggregate(aggregateEvents)
 
-		payload := shared2.NewMediumKatalogisiertEvent(cmd.MediumId, cmd.Signature, cmd.Standort, cmd.ExemplarCode)
+		payload := events.NewMediumKatalogisiertEvent(cmd.MediumId, cmd.Signature, cmd.Standort, cmd.ExemplarCode)
 		err = aggregate.HandleMediumKatalogisieren(payload)
 		if err != nil {
 			return err
@@ -54,7 +55,7 @@ func (k *KatalogisiereMediumHandler) Handle(cmd KatalogisiereMediumCommand) erro
 	})
 }
 
-func (k *KatalogisiereMediumHandler) SendEvent(payload shared2.MediumKatalogisiertEvent, aggregateKey, aggregateType string) error {
+func (k *KatalogisiereMediumHandler) SendEvent(payload events.MediumKatalogisiertEvent, aggregateKey, aggregateType string) error {
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -68,7 +69,7 @@ func (k *KatalogisiereMediumHandler) SendEvent(payload shared2.MediumKatalogisie
 	event := shared.NewEvent(
 		aggregateType,
 		aggregateKey,
-		shared2.MediumKatalogisiertEventType,
+		events.MediumKatalogisiertEventType,
 		version+1,
 		payloadJSON)
 
@@ -76,7 +77,7 @@ func (k *KatalogisiereMediumHandler) SendEvent(payload shared2.MediumKatalogisie
 	if err != nil {
 		return err
 	}
-	err = k.kafkaService.SendEvent(k.producer, shared2.MediumKatalogisiertEventType, payloadJSON)
+	err = k.kafkaService.SendEvent(k.producer, events.MediumKatalogisiertEventType, payloadJSON)
 	if err != nil {
 		panic(err)
 	}

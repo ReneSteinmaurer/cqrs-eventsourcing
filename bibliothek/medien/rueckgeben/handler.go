@@ -2,8 +2,9 @@ package rueckgeben
 
 import (
 	"context"
+	"cqrs-playground/bibliothek/medien/projections/verliehen"
+	"cqrs-playground/bibliothek/medien/rueckgeben/events"
 	shared2 "cqrs-playground/bibliothek/medien/shared"
-	"cqrs-playground/bibliothek/medien/verliehen_projection"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"
@@ -16,7 +17,7 @@ type MediumRueckgabeHandler struct {
 	eventStore      *shared.EventStore
 	kafkaService    *shared.KafkaService
 	producer        sarama.SyncProducer
-	verliehenReader *verliehen_projection.MediumVerliehenReader
+	verliehenReader *verliehen.MediumVerliehenReader
 	ctx             context.Context
 }
 
@@ -24,7 +25,7 @@ func NewMediumRueckgabeHandler(
 	ctx context.Context, eventStore *shared.EventStore, kafkaService *shared.KafkaService, db *pgxpool.Pool,
 ) *MediumRueckgabeHandler {
 	producer := kafkaService.NewSyncProducer()
-	vr := verliehen_projection.NewMediumVerliehenReader(db)
+	vr := verliehen.NewMediumVerliehenReader(db)
 	return &MediumRueckgabeHandler{
 		eventStore:      eventStore,
 		kafkaService:    kafkaService,
@@ -42,7 +43,7 @@ func (v *MediumRueckgabeHandler) Handle(cmd MediumRueckgebenCommand) error {
 		return errors.New("alle Felder muessen befuellt sein")
 	}
 
-	return shared.RetryHandlerLogic(func() error {
+	return shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := v.eventStore.GetEventsByAggregateId(v.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err
@@ -50,7 +51,7 @@ func (v *MediumRueckgabeHandler) Handle(cmd MediumRueckgebenCommand) error {
 
 		aggregate := shared2.NewMediumAggregate(aggregateEvents)
 
-		payload := shared2.NewMediumZurueckgegebenEvent(cmd.MediumId, cmd.NutzerId, time.Now())
+		payload := events.NewMediumZurueckgegebenEvent(cmd.MediumId, cmd.NutzerId, time.Now())
 		err = aggregate.HandleMediumZurueckgegeben(payload)
 		if err != nil {
 			return err
@@ -60,7 +61,7 @@ func (v *MediumRueckgabeHandler) Handle(cmd MediumRueckgebenCommand) error {
 	})
 }
 
-func (v *MediumRueckgabeHandler) SendEvent(payload shared2.MediumZurueckgegebenEvent, aggregateKey, aggregateType string) error {
+func (v *MediumRueckgabeHandler) SendEvent(payload events.MediumZurueckgegebenEvent, aggregateKey, aggregateType string) error {
 	payloadJSON, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -74,7 +75,7 @@ func (v *MediumRueckgabeHandler) SendEvent(payload shared2.MediumZurueckgegebenE
 	event := shared.NewEvent(
 		aggregateType,
 		aggregateKey,
-		shared2.MediumZurueckgegebenEventType,
+		events.MediumZurueckgegebenEventType,
 		version+1,
 		payloadJSON)
 
@@ -82,7 +83,7 @@ func (v *MediumRueckgabeHandler) SendEvent(payload shared2.MediumZurueckgegebenE
 	if err != nil {
 		return err
 	}
-	err = v.kafkaService.SendEvent(v.producer, shared2.MediumZurueckgegebenEventType, payloadJSON)
+	err = v.kafkaService.SendEvent(v.producer, events.MediumZurueckgegebenEventType, payloadJSON)
 	if err != nil {
 		panic(err)
 	}

@@ -1,0 +1,1 @@
+alter table medium_bestand add column katalogisiert boolean default false;

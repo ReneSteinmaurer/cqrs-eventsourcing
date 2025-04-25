@@ -36,7 +36,7 @@ func (n *NutzerRegistrierungHandler) Handle(cmd NutzerRegistrierungCommand) erro
 		return errors.New("die Email wird benötigt")
 	}
 
-	return shared.RetryHandlerLogic(func() error {
+	return shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := n.eventStore.GetEventsByAggregateId(n.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err

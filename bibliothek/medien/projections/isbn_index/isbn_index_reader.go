@@ -1,4 +1,4 @@
-package isbn_index_projection
+package isbn_index
 
 import (
 	"context"

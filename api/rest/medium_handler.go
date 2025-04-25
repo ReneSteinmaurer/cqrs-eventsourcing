@@ -51,17 +51,18 @@ func (api *MediumHandlerAPI) KatalogisiereMedium(w http.ResponseWriter, r *http.
 	var cmd katalogisieren.KatalogisiereMediumCommand
 
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		SendResponseErrors(&w, err.Error())
 		return
 	}
 
-	if err := api.KatalogisiereMediumHandler.Handle(cmd); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	aggregateId, err := api.KatalogisiereMediumHandler.Handle(cmd)
+	if err != nil {
+		SendResponseErrors(&w, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"status": "medium katalogisiert"})
+	res := NewResponseContentMessage("medium katalogisiert", aggregateId)
+	SendResponse(res, &w)
 }
 
 func (api *MediumHandlerAPI) VerleiheMedium(w http.ResponseWriter, r *http.Request) {

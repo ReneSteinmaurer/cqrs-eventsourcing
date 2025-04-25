@@ -1,8 +1,8 @@
-package isbn_index_projection
+package isbn_index
 
 import (
 	"context"
-	shared2 "cqrs-playground/bibliothek/medien/shared"
+	shared2 "cqrs-playground/bibliothek/medien/erwerben/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"

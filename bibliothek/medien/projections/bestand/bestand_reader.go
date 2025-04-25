@@ -1,20 +1,21 @@
-package bestand_projection
+package bestand
 
 import (
 	"context"
-	"cqrs-playground/bibliothek/medien/shared"
+	"cqrs-playground/bibliothek/medien/erwerben/events"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type MediumBestand struct {
-	MediumId     string            `db:"medium_id" json:"mediumId"`
-	ISBN         string            `db:"isbn" json:"ISBN"`
-	MediumType   shared.MediumType `db:"medium_type" json:"mediumType"`
-	Name         string            `db:"name" json:"name"`
-	Genre        string            `db:"genre" json:"genre"`
-	Signature    string            `db:"signature" json:"signature"`
-	Standort     string            `db:"standort" json:"standort"`
-	ExemplarCode string            `db:"exemplar_code" json:"exemplarCode"`
+	MediumId      string            `db:"medium_id" json:"mediumId"`
+	ISBN          string            `db:"isbn" json:"ISBN"`
+	MediumType    events.MediumType `db:"medium_type" json:"mediumType"`
+	Name          string            `db:"name" json:"name"`
+	Genre         string            `db:"genre" json:"genre"`
+	Katalogisiert bool              `db:"katalogisiert" json:"katalogisiert"`
+	Signature     string            `db:"signature" json:"signature"`
+	Standort      string            `db:"standort" json:"standort"`
+	ExemplarCode  string            `db:"exemplar_code" json:"exemplarCode"`
 }
 
 type MediumBestandReader struct {
@@ -44,6 +45,7 @@ func (r *MediumBestandReader) GetAll(ctx context.Context) ([]MediumBestand, erro
 			medium_type,
 			name,
 			genre,
+			katalogisiert,
 			coalesce(signature, '')    AS signature,
 			coalesce(standort, '')     AS standort,
 			coalesce(exemplar_code, '') AS exemplar_code
@@ -63,6 +65,7 @@ func (r *MediumBestandReader) GetAll(ctx context.Context) ([]MediumBestand, erro
 			&medium.MediumType,
 			&medium.Name,
 			&medium.Genre,
+			&medium.Katalogisiert,
 			&medium.Signature,
 			&medium.Standort,
 			&medium.ExemplarCode,

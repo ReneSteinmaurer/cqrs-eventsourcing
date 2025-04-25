@@ -1,4 +1,4 @@
-package shared
+package events
 
 import (
 	"encoding/json"

@@ -2,7 +2,7 @@ package rest
 
 import (
 	"context"
-	"cqrs-playground/bibliothek/medien/bestand_projection"
+	"cqrs-playground/bibliothek/medien/projections/bestand"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
@@ -10,14 +10,14 @@ import (
 
 type MediumBestandAPI struct {
 	db            *pgxpool.Pool
-	bestandReader *bestand_projection.MediumBestandReader
+	bestandReader *bestand.MediumBestandReader
 	ctx           context.Context
 	cancel        context.CancelFunc
 }
 
 func NewMediumBestandAPI(db *pgxpool.Pool) *MediumBestandAPI {
 	ctx, cancel := context.WithCancel(context.Background())
-	br := bestand_projection.NewMediumBestandReader(db)
+	br := bestand.NewMediumBestandReader(db)
 	return &MediumBestandAPI{
 		db:            db,
 		bestandReader: br,

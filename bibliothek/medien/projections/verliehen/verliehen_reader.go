@@ -1,4 +1,4 @@
-package verliehen_projection
+package verliehen
 
 import (
 	"context"

@@ -11,11 +11,15 @@ import {MatIconModule} from '@angular/material/icon';
     MatIconButton
   ],
   template: `
-    <button class="flex justify-center items-center" mat-icon-button>
+    <button class="flex text-primary justify-center items-center" mat-icon-button>
       <mat-icon>bolt</mat-icon>
     </button>
   `,
-  styles: ``
+  styles: `
+    .mat-mdc-icon-button {
+      font-size: 0 !important;
+    }
+  `
 })
 export class KatalogisiereIconRendererComponent implements ICellRendererAngularComp {
 

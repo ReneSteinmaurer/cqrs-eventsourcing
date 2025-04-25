@@ -1,6 +1,10 @@
 package shared
 
 import (
+	"cqrs-playground/bibliothek/medien/ausleihen/events"
+	events2 "cqrs-playground/bibliothek/medien/erwerben/events"
+	events3 "cqrs-playground/bibliothek/medien/katalogisieren/events"
+	events4 "cqrs-playground/bibliothek/medien/rueckgeben/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"
@@ -12,7 +16,7 @@ var MediumAggregateType = "medium"
 type MediumAggregate struct {
 	MediumId            string
 	ISBN                string
-	MediumType          MediumType
+	MediumType          events2.MediumType
 	Name                string
 	Genre               string
 	Katalogisiert       bool
@@ -31,26 +35,26 @@ func NewMediumAggregate(events []shared.Event) *MediumAggregate {
 
 func (m *MediumAggregate) Apply(event shared.Event) {
 	switch event.Type {
-	case MediumErworbenEventType:
-		var e MediumErworbenEvent
+	case events2.MediumErworbenEventType:
+		var e events2.MediumErworbenEvent
 		_ = json.Unmarshal(event.Payload, &e)
 		m.ISBN = e.ISBN
 		m.MediumId = e.MediumId
 		m.MediumType = e.MediumType
 		m.Name = e.Name
 		m.Genre = e.Genre
-	case MediumKatalogisiertEventType:
-		var e MediumKatalogisiertEvent
+	case events3.MediumKatalogisiertEventType:
+		var e events3.MediumKatalogisiertEvent
 		_ = json.Unmarshal(event.Payload, &e)
 		m.Katalogisiert = true
-	case MediumVerliehenEventType:
-		var e MediumVerliehenEvent
+	case events.MediumVerliehenEventType:
+		var e events.MediumVerliehenEvent
 		_ = json.Unmarshal(event.Payload, &e)
 		m.VerliehenVon = &e.Von
 		m.VerliehenBis = &e.Bis
 		m.VerliehenAnNutzerId = e.NutzerId
-	case MediumZurueckgegebenEventType:
-		var e MediumZurueckgegebenEvent
+	case events4.MediumZurueckgegebenEventType:
+		var e events4.MediumZurueckgegebenEvent
 		_ = json.Unmarshal(event.Payload, &e)
 		m.VerliehenVon = nil
 		m.VerliehenBis = nil
@@ -58,14 +62,14 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 	}
 }
 
-func (m *MediumAggregate) HandleMediumErwerben(event MediumErworbenEvent) error {
+func (m *MediumAggregate) HandleMediumErwerben(event events2.MediumErworbenEvent) error {
 	if m.alreadyExists(event.ISBN) {
 		return errors.New("ein Medium mit dieser Id existiert bereits im Bestand")
 	}
 	return nil
 }
 
-func (m *MediumAggregate) HandleMediumVerleihen(event MediumVerliehenEvent) error {
+func (m *MediumAggregate) HandleMediumVerleihen(event events.MediumVerliehenEvent) error {
 	if m.MediumId != event.MediumId {
 		return errors.New("es gibt noch kein Medium mit dieser Id im System")
 	}
@@ -82,7 +86,7 @@ func (m *MediumAggregate) HandleMediumVerleihen(event MediumVerliehenEvent) erro
 	return nil
 }
 
-func (m *MediumAggregate) HandleMediumZurueckgegeben(event MediumZurueckgegebenEvent) error {
+func (m *MediumAggregate) HandleMediumZurueckgegeben(event events4.MediumZurueckgegebenEvent) error {
 	if m.MediumId != event.MediumId {
 		return errors.New("es gibt noch kein Medium mit dieser Id im System")
 	}
@@ -99,7 +103,7 @@ func (m *MediumAggregate) HandleMediumZurueckgegeben(event MediumZurueckgegebenE
 	return nil
 }
 
-func (m *MediumAggregate) HandleMediumKatalogisieren(event MediumKatalogisiertEvent) error {
+func (m *MediumAggregate) HandleMediumKatalogisieren(event events3.MediumKatalogisiertEvent) error {
 	if m.MediumId != event.MediumId {
 		return errors.New("es gibt noch kein Medium mit dieser Id im System")
 	}

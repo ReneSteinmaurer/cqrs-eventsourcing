@@ -1,8 +1,9 @@
-package verliehen_projection
+package verliehen
 
 import (
 	"context"
-	shared2 "cqrs-playground/bibliothek/medien/shared"
+	"cqrs-playground/bibliothek/medien/ausleihen/events"
+	shared2 "cqrs-playground/bibliothek/medien/rueckgeben/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -52,12 +53,12 @@ func (mv *MediumVerliehenProjection) listenToEvent(eventType string, applyFunc f
 }
 
 func (mv *MediumVerliehenProjection) Start() {
-	go mv.listenToEvent(shared2.MediumVerliehenEventType, mv.applyMediumVerliehen)
+	go mv.listenToEvent(events.MediumVerliehenEventType, mv.applyMediumVerliehen)
 	go mv.listenToEvent(shared2.MediumZurueckgegebenEventType, mv.applyMediumZurueckgegeben)
 }
 
 func (mv *MediumVerliehenProjection) applyMediumVerliehen(payloadJSON []byte) {
-	var payload shared2.MediumVerliehenEvent
+	var payload events.MediumVerliehenEvent
 	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return

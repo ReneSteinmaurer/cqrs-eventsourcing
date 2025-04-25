@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"cqrs-playground/api/rest"
+	"cqrs-playground/api/ws"
 	"cqrs-playground/bibliothek/medien/ausleihen"
-	"cqrs-playground/bibliothek/medien/bestand_projection"
 	"cqrs-playground/bibliothek/medien/erwerben"
-	"cqrs-playground/bibliothek/medien/isbn_index_projection"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
+	"cqrs-playground/bibliothek/medien/projections/bestand"
+	"cqrs-playground/bibliothek/medien/projections/isbn_index"
+	"cqrs-playground/bibliothek/medien/projections/verliehen"
 	"cqrs-playground/bibliothek/medien/rueckgeben"
-	"cqrs-playground/bibliothek/medien/verliehen_projection"
 	"cqrs-playground/bibliothek/nutzer/registrierung"
 	db2 "cqrs-playground/db"
 	"cqrs-playground/shared"
@@ -28,6 +29,9 @@ func main() {
 	ctx := context.Background()
 	db := db2.NewDB(ctx)
 	kafkaService := shared.NewKafkaService()
+	webSocketHub := shared.NewWebSocketHub(ctx)
+	webSocketApi := ws.NewNotificationWsAPI(ctx, webSocketHub)
+	notificationService := shared.NewNotificationService(ctx, webSocketHub)
 
 	eventStore := shared.EventStore{DB: db.Pool}
 
@@ -39,13 +43,13 @@ func main() {
 	wishlistProjection := wishlist_projection.NewWishlistProjection(ctx, &eventStore, db.Pool, projectionUpdater, kafkaService)
 	wishlistProjection.Start()
 
-	isbnMediumIdProjection := isbn_index_projection.NewISBNIndexProjection(ctx, &eventStore, db.Pool, projectionUpdater, kafkaService)
+	isbnMediumIdProjection := isbn_index.NewISBNIndexProjection(ctx, &eventStore, db.Pool, projectionUpdater, kafkaService)
 	isbnMediumIdProjection.Start()
 
-	mediumBestandProjection := bestand_projection.NewMediumBestandProjection(ctx, &eventStore, db.Pool, kafkaService)
+	mediumBestandProjection := bestand.NewMediumBestandProjection(ctx, &eventStore, db.Pool, kafkaService, notificationService)
 	mediumBestandProjection.Start()
 
-	mediumVerliehenProjection := verliehen_projection.NewMediumVerliehenProjection(ctx, &eventStore, db.Pool, kafkaService)
+	mediumVerliehenProjection := verliehen.NewMediumVerliehenProjection(ctx, &eventStore, db.Pool, kafkaService)
 	mediumVerliehenProjection.Start()
 
 	addItemHandlerCart := cart_add_item.NewAddItemHandler(ctx, &eventStore)
@@ -72,6 +76,8 @@ func main() {
 	mediumBestandAPI := rest.NewMediumBestandAPI(db.Pool)
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", webSocketApi.Handle)
+
 	mux.HandleFunc("/cart/add-item", cartApi.AddItem)
 	mux.HandleFunc("/cart/remove-item", cartApi.RemoveItem)
 	mux.HandleFunc("/wishlist/add-item", wishlistApi.AddItem)

@@ -1,8 +1,9 @@
-package bestand_projection
+package bestand
 
 import (
 	"context"
-	shared2 "cqrs-playground/bibliothek/medien/shared"
+	"cqrs-playground/bibliothek/medien/erwerben/events"
+	shared2 "cqrs-playground/bibliothek/medien/katalogisieren/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -10,24 +11,26 @@ import (
 )
 
 type MedienProjection struct {
-	EventStore   *shared.EventStore
-	DB           *pgxpool.Pool
-	KafkaService *shared.KafkaService
-	ctx          context.Context
-	cancel       context.CancelFunc
+	EventStore          *shared.EventStore
+	DB                  *pgxpool.Pool
+	KafkaService        *shared.KafkaService
+	NotificationService *shared.NotificationService
+	ctx                 context.Context
+	cancel              context.CancelFunc
 }
 
 func NewMediumBestandProjection(
 	ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool,
-	kafkaService *shared.KafkaService,
+	kafkaService *shared.KafkaService, notificationService *shared.NotificationService,
 ) *MedienProjection {
 	ctx, cancel := context.WithCancel(ctx)
 	return &MedienProjection{
-		ctx:          ctx,
-		cancel:       cancel,
-		EventStore:   eventStore,
-		DB:           db,
-		KafkaService: kafkaService,
+		ctx:                 ctx,
+		cancel:              cancel,
+		EventStore:          eventStore,
+		DB:                  db,
+		KafkaService:        kafkaService,
+		NotificationService: notificationService,
 	}
 }
 
@@ -52,12 +55,12 @@ func (cp *MedienProjection) listenToEvent(eventType string, applyFunc func([]byt
 }
 
 func (cp *MedienProjection) Start() {
-	go cp.listenToEvent(shared2.MediumErworbenEventType, cp.applyMediumErworben)
+	go cp.listenToEvent(events.MediumErworbenEventType, cp.applyMediumErworben)
 	go cp.listenToEvent(shared2.MediumKatalogisiertEventType, cp.applyMediumKatalogisiert)
 }
 
 func (cp *MedienProjection) applyMediumErworben(payloadJSON []byte) {
-	var payload shared2.MediumErworbenEvent
+	var payload events.MediumErworbenEvent
 	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return
@@ -87,7 +90,8 @@ func (cp *MedienProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 		set
 			signature = $2,
 			standort = $3,
-			exemplar_code = $4
+			exemplar_code = $4,
+		    katalogisiert = true
 		where medium_id = $1
 	`
 
@@ -99,5 +103,7 @@ func (cp *MedienProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 	)
 	if err != nil {
 		log.Println("Error updating read-model:", err)
+		return
 	}
+	cp.NotificationService.Notify(payload.MediumId)
 }
