@@ -1,5 +1,5 @@
-import {inject, Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {inject, Injectable, signal} from '@angular/core';
+import {HttpClient, httpResource} from '@angular/common/http';
 import {RestResponse} from '../../../shared/types/rest-response';
 import {LandingPageService} from '../landing-page.service';
 import {WebSocketMessage, WebsocketService} from '../../../shared/services/websocket.service';
@@ -22,9 +22,9 @@ export class KatalogisiereMediumService {
   katalogisiereMedium(cmd: KatalogisiereCommand) {
     this.http.post<RestResponse<string>>('http://localhost:8080/bibliothek/katalogisiere-medium', {...cmd}).subscribe(res => {
       this.websocketService.listen(res.data).subscribe((msg) => {
-          if (msg.type === 'PROJECTION_UPDATED') {
-            this.landingPageService.getAllMedien()
-          }
+        if (msg.type === 'PROJECTION_UPDATED') {
+          this.landingPageService.medien.reload()
+        }
       });
     });
   }

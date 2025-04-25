@@ -34,7 +34,7 @@ const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "
         domLayout="normal"
         [defaultColDef]="defaultColDef"
         [theme]="myTheme"
-        [rowData]="landingPageService.medien()"
+        [rowData]="landingPageService.medien.value()"
         [columnDefs]="columnDefs"
         [pagination]="true"
         [paginationPageSize]="10"
@@ -48,10 +48,6 @@ const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "
 export class LandingPageComponent {
   landingPageService = inject(LandingPageService);
   dialog = inject(MatDialog);
-
-  constructor() {
-    this.landingPageService.getAllMedien()
-  }
 
   columnDefs: ColDef[] = [
     {field: 'mediumId', headerName: 'ID', hide: true},

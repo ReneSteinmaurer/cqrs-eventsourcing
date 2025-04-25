@@ -19,7 +19,6 @@ export type WebSocketMessage<T> = {
 })
 export class WebsocketService {
   private wsSubject: WebSocketSubject<WebSocketMessage<string>> | null = null;
-  private socket?: WebSocket
 
   listen(aggregateId: string): Observable<WebSocketMessage<string>>{
     this.wsSubject = webSocket<WebSocketMessage<string>>({
