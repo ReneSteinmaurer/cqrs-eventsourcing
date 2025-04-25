@@ -26,7 +26,7 @@ export class WebsocketService {
       url: `ws://localhost:8080/ws?aggregateId=${aggregateId}`,
       deserializer: msg => JSON.parse(msg.data)
     })
-    return this.wsSubject.asObservable();
+    return this.wsSubject;
   }
 
 }
