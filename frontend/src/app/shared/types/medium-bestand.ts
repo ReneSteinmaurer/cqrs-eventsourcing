@@ -7,4 +7,5 @@ export interface MediumBestand {
   signature: string;
   standort: string;
   exemplarCode: string;
+  katalogisiert: string
 }
