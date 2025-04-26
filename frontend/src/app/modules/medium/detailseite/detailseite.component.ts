@@ -7,6 +7,7 @@ import {MatBadgeModule} from '@angular/material/badge';
 import {RowLabelComponent} from '../../../shared/ui/row-label/row-label.component';
 import {CardComponent} from '../../../shared/ui/card/card.component';
 import {Router} from '@angular/router';
+import {StatusChipComponent} from './status-chip/status-chip.component';
 
 @Component({
   selector: 'app-detailseite',
@@ -18,6 +19,7 @@ import {Router} from '@angular/router';
     MatBadgeModule,
     RowLabelComponent,
     CardComponent,
+    StatusChipComponent,
   ],
   template: `
     <div class="flex justify-center items-center">
@@ -31,14 +33,13 @@ import {Router} from '@angular/router';
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="col-span-1 md:col-span-2">
             <app-card [title]="'Sapiens: A Brief History of Humankind'">
+              <div class="absolute top-4 right-4">
+                <app-status-chip [status]="'verliehen'"></app-status-chip>
+              </div>
               <div class="space-y-2">
                 <p><strong>ISBN:</strong> 978-0-14-312779-9</p>
                 <p><strong>Genre:</strong> Sachbuch</p>
                 <p><strong>Typ:</strong> Buch</p>
-                <p>
-                  <strong>Status:</strong>
-                  <span matBadge="Verfügbar" matBadgeColor="primary" matBadgeSize="small" class="ml-2"></span>
-                </p>
               </div>
             </app-card>
           </div>
@@ -61,7 +62,7 @@ import {Router} from '@angular/router';
         </div>
 
         <mat-tab-group mat-stretch-tabs [dynamicHeight]="false" class="min-h-[400px]">
-        <mat-tab label="Details">
+          <mat-tab label="Details">
             <div class="p-4 space-y-4">
               <app-card [title]="'📖 Medium-Informationen'">
                 <div class="space-y-2">
@@ -77,7 +78,7 @@ import {Router} from '@angular/router';
           <mat-tab label="Historie">
             <div class="p-4 space-y-4">
               <div class="flex flex-col space-y-4 max-h-[300px] overflow-y-auto pr-2">
-              <app-row-label
+                <app-row-label
                   [icon]="'library_add'"
                   [iconClass]="'text-primary'"
                   [label]="'21.04.2025'"
