@@ -60,30 +60,24 @@ import {Router} from '@angular/router';
           </app-card>
         </div>
 
-        <mat-tab-group mat-stretch-tabs>
-          <mat-tab label="Details">
+        <mat-tab-group mat-stretch-tabs [dynamicHeight]="false" class="min-h-[400px]">
+        <mat-tab label="Details">
             <div class="p-4 space-y-4">
-              <mat-card class="shadow-md">
-                <mat-card-header>
-                  <mat-card-title class="text-lg font-semibold">
-                    📖 Medium-Informationen
-                  </mat-card-title>
-                </mat-card-header>
-                <mat-card-content class="space-y-1">
+              <app-card [title]="'📖 Medium-Informationen'">
+                <div class="space-y-2">
                   <p><strong>Erworben am:</strong> 21.04.2025</p>
                   <p><strong>Katalogisiert am:</strong> 21.04.2025</p>
                   <p><strong>Aktueller Standort:</strong> Hauptbibliothek Wien</p>
                   <p><strong>Exemplar-Code:</strong> EX123456789</p>
-                </mat-card-content>
-              </mat-card>
+                </div>
+              </app-card>
             </div>
           </mat-tab>
 
           <mat-tab label="Historie">
             <div class="p-4 space-y-4">
-              <div class="flex flex-col space-y-4">
-
-                <app-row-label
+              <div class="flex flex-col space-y-4 max-h-[300px] overflow-y-auto pr-2">
+              <app-row-label
                   [icon]="'library_add'"
                   [iconClass]="'text-primary'"
                   [label]="'21.04.2025'"
