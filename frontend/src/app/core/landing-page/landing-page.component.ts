@@ -107,10 +107,6 @@ export class LandingPageComponent {
     })
   }
 
-  private openVerleihenDialog(mediumId: string) {
-
-  }
-
   private openDetailansicht(mediumId: string) {
     this.router.navigate(['medium', mediumId])
   }
@@ -121,9 +117,7 @@ export class LandingPageComponent {
     { field: 'ISBN', headerName: 'ISBN', lockPosition: true, flex: 1, minWidth: 150 },
     { field: 'mediumType', headerName: 'Typ', flex: 1 },
     { field: 'genre', headerName: 'Genre', flex: 1 },
-    { field: 'signature', headerName: 'Signatur', flex: 1 },
     { field: 'standort', headerName: 'Bibliothek', flex: 1 },
-    { field: 'exemplarCode', headerName: 'Exemplar-ID', flex: 1 },
     {
       headerName: 'Aktionen',
       pinned: 'right',
@@ -136,7 +130,6 @@ export class LandingPageComponent {
           component: AktionenIconRenderer,
           params: {
             katalogisieren: (mediumId: string) => this.openKatalogisierenDialog(mediumId),
-            verleihen: (mediumId: string) => this.openVerleihenDialog(mediumId),
             detailansichtOeffnen: (mediumId: string) => this.openDetailansicht(mediumId),
           },
         };

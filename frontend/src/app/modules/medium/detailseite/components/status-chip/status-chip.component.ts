@@ -50,9 +50,9 @@ export class StatusChipComponent {
   chipClasses() {
     switch (this.status()) {
       case 'VERLIEHEN':
-        return ['bg-red-700/60', 'text-red-100', 'border', 'border-red-400/50'];
+        return ['!bg-[var(--mat-sys-error)]/20 ', 'text-[var(--mat-sys-error)] ', 'border', '!border-[var(--mat-sys-error)]/50'];
       case 'KATALOGISIERT':
-        return ['bg-green-700/60', 'text-green-100', 'border', 'border-green-400/50'];
+        return ['bg-[#00dddd]/10', 'text-[#00dddd]/100', 'border', 'border-[#00dddd]/60'];
       case 'ERWORBEN':
         return ['bg-gray-700/60', 'text-gray-300', 'border', 'border-gray-400/40'];
       default:

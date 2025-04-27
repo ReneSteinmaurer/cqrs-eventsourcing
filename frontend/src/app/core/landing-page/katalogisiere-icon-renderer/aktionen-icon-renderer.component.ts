@@ -33,15 +33,6 @@ export interface AktionenCellRendererParams extends ICellRendererParams<MediumBe
       [disabled]="!medium()?.katalogisiert"
       class="flex text-primary justify-center items-center"
       mat-icon-button
-      matTooltip="Medium verleihen"
-      (click)="verleihen(medium()!.mediumId)"
-    >
-      <mat-icon>label_important</mat-icon>
-    </button>
-    <button
-      [disabled]="!medium()?.katalogisiert"
-      class="flex text-primary justify-center items-center"
-      mat-icon-button
       matTooltip="Details ansehen"
       (click)="detailansichtOeffnen(medium()!.mediumId)"
     >
@@ -58,13 +49,11 @@ export interface AktionenCellRendererParams extends ICellRendererParams<MediumBe
 export class AktionenIconRenderer implements ICellRendererAngularComp {
   medium = signal<MediumBestand | undefined>(undefined)
   katalogisieren = (id: string) => {};
-  verleihen = (id: string) => {};
   detailansichtOeffnen = (id: string) => {};
 
   agInit(params: AktionenCellRendererParams): void {
     this.medium.set(params.data)
     this.katalogisieren = params.katalogisieren;
-    this.verleihen = params.verleihen;
     this.detailansichtOeffnen = params.detailansichtOeffnen;
     this.refresh(params);
   }

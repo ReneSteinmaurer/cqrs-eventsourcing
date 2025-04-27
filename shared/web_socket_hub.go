@@ -36,12 +36,12 @@ func (hub *WebSocketHub) RegisterClientForAggregate(client *WebSocketClient, agg
 	defer hub.lock.Unlock()
 
 	if _, exists := hub.clientsByAggregateID[aggregateId]; !exists {
-		log.Printf("[WebSocket] Registering client for aggregateId=%s\n", aggregateId)
+		log.Printf("[WEBSOCKET] Registering client for aggregateId=%s\n", aggregateId)
 		hub.clientsByAggregateID[aggregateId] = make(map[*WebSocketClient]bool)
 	}
 
 	hub.clientsByAggregateID[aggregateId][client] = true
-	log.Printf("[WebSocket] Client registered for aggregateId=%s\n", aggregateId)
+	log.Printf("[WEBSOCKET] Client registered for aggregateId=%s\n", aggregateId)
 	go hub.listenForDisconnect(client, aggregateId)
 }
 
@@ -53,7 +53,7 @@ func (hub *WebSocketHub) listenForDisconnect(client *WebSocketClient, aggregateI
 			hub.lock.Lock()
 			delete(hub.clientsByAggregateID[aggregateId], client)
 			hub.lock.Unlock()
-			log.Printf("[WebSocket] Client disconnected for aggregateId=%s\n", aggregateId)
+			log.Printf("[WEBSOCKET] Client disconnected for aggregateId=%s\n", aggregateId)
 			break
 		}
 	}
@@ -65,13 +65,13 @@ func (hub *WebSocketHub) BroadcastToAggregate(aggregateId string, msg WebSocketM
 
 	clients, exists := hub.clientsByAggregateID[aggregateId]
 	if !exists {
-		return fmt.Errorf("[WebSocket] No clients for aggregateId=%s\n", aggregateId)
+		return fmt.Errorf("[WEBSOCKET] No clients for aggregateId=%s\n", aggregateId)
 	}
 
 	for client := range clients {
 		err := client.Conn.WriteJSON(msg)
 		if err != nil {
-			return fmt.Errorf("[WebSocket] Error sending to client: %v\n", err)
+			return fmt.Errorf("[WEBSOCKET] Error sending to client: %v\n", err)
 		}
 	}
 	return nil

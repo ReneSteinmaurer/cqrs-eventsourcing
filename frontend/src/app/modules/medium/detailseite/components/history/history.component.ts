@@ -18,7 +18,7 @@ import {DatePipe} from '@angular/common';
   template: `
     <div class="flex flex-col gap-2">
       @for (event of historyEvents(); track $index) {
-        <div class="bg-gray-800 rounded-xl p-4 shadow-md hover:bg-gray-700 transition">
+        <div class="bg-[#00dddd]/10 rounded-xl p-4 shadow-md hover:bg-[#00dddd]/15 transition">
           <app-row-label
             [icon]="
           isErworben(event) ? 'library_add' :
@@ -44,7 +44,7 @@ import {DatePipe} from '@angular/common';
 
               @if (isVerliehen(event)) {
                 <span class="font-semibold text-gray-100 text-sm">
-              Verliehen an {{ event.payload.NutzerId }}
+              Verliehen an <span class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
             </span>
                 @if (event.payload.Von && event.payload.Bis) {
                   <span class="text-gray-400 text-xs mt-1">
@@ -55,7 +55,7 @@ import {DatePipe} from '@angular/common';
 
               @if (isZurueckgegeben(event)) {
                 <span class="font-semibold text-gray-100 text-sm">
-              Medium zurückgegeben von {{ event.payload.NutzerId }}
+              Medium zurückgegeben von <span class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
             </span>
                 @if (event.payload.Date) {
                   <span class="text-gray-400 text-xs mt-1">
