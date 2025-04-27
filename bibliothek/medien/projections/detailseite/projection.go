@@ -20,27 +20,29 @@ const (
 )
 
 type DetailseiteProjection struct {
-	EventStore   *shared.EventStore
-	DB           *pgxpool.Pool
-	KafkaService *shared.KafkaService
-	ctx          context.Context
-	cancel       context.CancelFunc
-	nutzerReader *nutzer.NutzerReader
+	EventStore          *shared.EventStore
+	DB                  *pgxpool.Pool
+	KafkaService        *shared.KafkaService
+	notificationService *shared.NotificationService
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	nutzerReader        *nutzer.NutzerReader
 }
 
 func NewDetailseiteProjection(
-	ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool,
-	kafkaService *shared.KafkaService,
+	ctx context.Context, eventStore *shared.EventStore, db *pgxpool.Pool, kafkaService *shared.KafkaService,
+	notificationService *shared.NotificationService,
 ) *DetailseiteProjection {
 	ctx, cancel := context.WithCancel(ctx)
 	nutzerReader := nutzer.NewNutzerReader(db)
 	return &DetailseiteProjection{
-		ctx:          ctx,
-		cancel:       cancel,
-		EventStore:   eventStore,
-		DB:           db,
-		KafkaService: kafkaService,
-		nutzerReader: nutzerReader,
+		ctx:                 ctx,
+		cancel:              cancel,
+		EventStore:          eventStore,
+		notificationService: notificationService,
+		DB:                  db,
+		KafkaService:        kafkaService,
+		nutzerReader:        nutzerReader,
 	}
 }
 
@@ -59,8 +61,8 @@ func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
 	}
 
 	const query = `
-		insert into medium_details (medium_id, isbn, titel, genre, typ, status)
-        values ($1, $2, $3, $4, $5, $6)
+		insert into medium_details (medium_id, isbn, titel, genre, typ, status, erworben_am)
+        values ($1, $2, $3, $4, $5, $6, now())
 		on conflict do nothing 
 	`
 
@@ -72,7 +74,9 @@ func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
 
 	if err := d.saveHistoryEvent(payload.MediumId, events2.MediumErworbenEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
+		return
 	}
+	d.notificationService.Notify(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumKatalogisiert(payloadJSON []byte) {
@@ -87,7 +91,8 @@ func (d *DetailseiteProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 			signatur = $1,
 			standort = $2,
 			exemplar_code = $3,
-			status = $4
+			status = $4,
+			katalogisiert_am = now()
 		WHERE medium_id = $5
 	`
 
@@ -99,7 +104,9 @@ func (d *DetailseiteProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 
 	if err := d.saveHistoryEvent(payload.MediumId, events3.MediumKatalogisiertEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
+		return
 	}
+	d.notificationService.Notify(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
@@ -127,7 +134,7 @@ func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
 		WHERE medium_id = $6
 	`
 
-	name := nutzerModel.Vorname + nutzerModel.Nachname
+	name := nutzerModel.Vorname + " " + nutzerModel.Nachname
 	_, err = d.DB.Exec(d.ctx, query, name, payload.Von, payload.Bis, MediumVerliehen, payload.NutzerId, payload.MediumId)
 	if err != nil {
 		log.Println("Error updating read-model:", err)
@@ -136,7 +143,9 @@ func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
 
 	if err := d.saveHistoryEvent(payload.MediumId, events4.MediumVerliehenEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
+		return
 	}
+	d.notificationService.Notify(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
@@ -166,7 +175,9 @@ func (d *DetailseiteProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
 
 	if err := d.saveHistoryEvent(payload.MediumId, events5.MediumZurueckgegebenEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
+		return
 	}
+	d.notificationService.Notify(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) saveHistoryEvent(mediumID string, eventType string, eventPayload any) error {

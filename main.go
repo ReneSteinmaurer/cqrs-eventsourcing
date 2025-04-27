@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"cqrs-playground/api/rest"
+	"cqrs-playground/api/rest/handlers"
+	"cqrs-playground/api/rest/readers"
 	"cqrs-playground/api/ws"
 	"cqrs-playground/bibliothek/medien/ausleihen"
 	"cqrs-playground/bibliothek/medien/erwerben"
@@ -54,7 +55,7 @@ func main() {
 	mediumVerliehenProjection := verliehen.NewMediumVerliehenProjection(ctx, &eventStore, db.Pool, kafkaService)
 	mediumVerliehenProjection.Start()
 
-	mediumDetailsProjection := detailseite.NewDetailseiteProjection(ctx, &eventStore, db.Pool, kafkaService)
+	mediumDetailsProjection := detailseite.NewDetailseiteProjection(ctx, &eventStore, db.Pool, kafkaService, notificationService)
 	mediumDetailsProjection.Start()
 
 	nutzerProjection := nutzer.NewNutzerProjection(ctx, &eventStore, db.Pool, kafkaService)
@@ -62,27 +63,28 @@ func main() {
 
 	addItemHandlerCart := cart_add_item.NewAddItemHandler(ctx, &eventStore)
 	removeItemHandlerCart := cart_remove_item.NewRemoveItemHandler(ctx, &eventStore)
-	cartApi := rest.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
+	cartApi := handlers.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
 
 	addItemHandlerWishlist := wishlist_add_item.NewAddItemHandler(ctx, &eventStore, kafkaService)
 	removeItemHandlerWishlist := wishlist_remove_item.NewRemoveItemHandler(ctx, &eventStore, kafkaService)
-	wishlistApi := rest.NewWishlistApi(addItemHandlerWishlist, removeItemHandlerWishlist)
+	wishlistApi := handlers.NewWishlistApi(addItemHandlerWishlist, removeItemHandlerWishlist)
 
 	registriereNutzerHandler := registrierung.NewNutzerRegistrierungHandler(ctx, &eventStore, kafkaService)
-	nutzerRegistrierungApi := rest.NewNutzerRegistrierungAPI(registriereNutzerHandler)
+	nutzerRegistrierungApi := handlers.NewNutzerRegistrierungAPI(registriereNutzerHandler)
 
 	erwerbeMediumHandler := erwerben.NewErwerbeMediumHandler(ctx, &eventStore, kafkaService, db.Pool)
 	katalogisiereMediumHandler := katalogisieren.NewKatalogisiereMediumHandler(ctx, &eventStore, kafkaService)
 	verleiheMediumHandler := ausleihen.NewVerleiheMediumHandler(ctx, &eventStore, kafkaService, db.Pool)
 	rueckgabeMediumHandler := rueckgeben.NewMediumRueckgabeHandler(ctx, &eventStore, kafkaService, db.Pool)
-	erwerbeMediumAPI := rest.NewErwerbeMediumAPI(
+	erwerbeMediumAPI := handlers.NewErwerbeMediumAPI(
 		erwerbeMediumHandler,
 		katalogisiereMediumHandler,
 		verleiheMediumHandler,
 		rueckgabeMediumHandler)
 
-	mediumBestandAPI := rest.NewMediumBestandAPI(db.Pool)
-	mediumDetailsAPI := rest.NewMediumDetailsAPI(db.Pool)
+	mediumBestandAPI := readers.NewMediumBestandAPI(db.Pool)
+	mediumDetailsAPI := readers.NewMediumDetailsAPI(db.Pool)
+	nutzerAPI := readers.NewNutzerAPI(db.Pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", webSocketApi.Handle)
@@ -100,6 +102,9 @@ func main() {
 
 	mux.HandleFunc("/bibliothek/bestand", mediumBestandAPI.GetAll)
 	mux.HandleFunc("/bibliothek/medium", mediumDetailsAPI.GetAll)
+
+	mux.HandleFunc("/nutzer/find-by-email", nutzerAPI.FindNutzerByEmailPrefix)
+
 	corsWrapped := withCORS(mux)
 
 	log.Println("Server started at :8080")

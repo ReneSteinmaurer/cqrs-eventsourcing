@@ -35,15 +35,15 @@ func NewMediumRueckgabeHandler(
 	}
 }
 
-func (v *MediumRueckgabeHandler) Handle(cmd MediumRueckgebenCommand) error {
+func (v *MediumRueckgabeHandler) Handle(cmd MediumRueckgebenCommand) (string, error) {
 	aggregateKey := cmd.MediumId
 	aggregateType := shared2.MediumAggregateType
 
 	if cmd.MediumId == "" || cmd.NutzerId == "" {
-		return errors.New("alle Felder muessen befuellt sein")
+		return "", errors.New("alle Felder muessen befuellt sein")
 	}
 
-	return shared.RetryHandlerBasedOnVersionConflict(func() error {
+	return aggregateKey, shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := v.eventStore.GetEventsByAggregateId(v.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err

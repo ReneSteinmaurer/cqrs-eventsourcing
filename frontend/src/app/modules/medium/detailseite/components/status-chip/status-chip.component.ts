@@ -1,6 +1,7 @@
 import { Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import {NgClass} from '@angular/common';
+import {MediumStatus} from '../../types/medium-details';
 
 @Component({
   selector: 'app-status-chip',
@@ -17,47 +18,42 @@ import {NgClass} from '@angular/common';
   styles: ``
 })
 export class StatusChipComponent {
-  status = input.required<'verfuegbar' | 'verliehen' | 'katalogisiert' | 'erworben'>();
+  status = input.required<MediumStatus>();
 
   label() {
     switch (this.status()) {
-      case 'verfuegbar': return 'Verfügbar';
-      case 'verliehen': return 'Verliehen';
-      case 'katalogisiert': return 'Katalogisiert';
-      case 'erworben': return 'Erworben';
+      case 'VERLIEHEN': return 'Verliehen';
+      case 'KATALOGISIERT': return 'Katalogisiert';
+      case 'ERWORBEN': return 'Erworben';
       default: return '';
     }
   }
 
   color() {
     switch (this.status()) {
-      case 'verfuegbar': return 'primary';
-      case 'verliehen': return 'warn';
-      case 'katalogisiert': return 'accent';
-      case 'erworben': return undefined;
+      case 'VERLIEHEN': return 'warn';
+      case 'KATALOGISIERT': return 'accent';
+      case 'ERWORBEN': return undefined;
       default: return undefined;
     }
   }
 
   icon() {
     switch (this.status()) {
-      case 'verfuegbar': return 'check_circle';
-      case 'verliehen': return 'error';
-      case 'katalogisiert': return 'library_books';
-      case 'erworben': return 'inventory_2';
+      case 'VERLIEHEN': return 'error';
+      case 'KATALOGISIERT': return 'library_books';
+      case 'ERWORBEN': return 'inventory_2';
       default: return undefined;
     }
   }
 
   chipClasses() {
     switch (this.status()) {
-      case 'verfuegbar':
-        return ['bg-green-700/60', 'text-green-100', 'border', 'border-green-400/50'];
-      case 'verliehen':
+      case 'VERLIEHEN':
         return ['bg-red-700/60', 'text-red-100', 'border', 'border-red-400/50'];
-      case 'katalogisiert':
-        return ['bg-purple-700/60', 'text-purple-100', 'border', 'border-purple-400/50'];
-      case 'erworben':
+      case 'KATALOGISIERT':
+        return ['bg-green-700/60', 'text-green-100', 'border', 'border-green-400/50'];
+      case 'ERWORBEN':
         return ['bg-gray-700/60', 'text-gray-300', 'border', 'border-gray-400/40'];
       default:
         return ['bg-white/10', 'text-white', 'border', 'border-white/20'];

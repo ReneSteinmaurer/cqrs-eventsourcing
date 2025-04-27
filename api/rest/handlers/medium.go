@@ -1,6 +1,7 @@
-package rest
+package handlers
 
 import (
+	"cqrs-playground/api/rest"
 	"cqrs-playground/bibliothek/medien/ausleihen"
 	"cqrs-playground/bibliothek/medien/erwerben"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
@@ -51,35 +52,36 @@ func (api *MediumHandlerAPI) KatalogisiereMedium(w http.ResponseWriter, r *http.
 	var cmd katalogisieren.KatalogisiereMediumCommand
 
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
-		SendResponseErrors(&w, err.Error())
+		rest.SendResponseErrors(&w, err.Error())
 		return
 	}
 
 	aggregateId, err := api.KatalogisiereMediumHandler.Handle(cmd)
 	if err != nil {
-		SendResponseErrors(&w, err.Error())
+		rest.SendResponseErrors(&w, err.Error())
 		return
 	}
 
-	res := NewResponseContentMessage("medium katalogisiert", aggregateId)
-	SendResponse(res, &w)
+	res := rest.NewResponseContentMessage("medium katalogisiert", aggregateId)
+	rest.SendResponse(res, &w)
 }
 
 func (api *MediumHandlerAPI) VerleiheMedium(w http.ResponseWriter, r *http.Request) {
 	var cmd ausleihen.VerleiheMediumCommand
 
 	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		rest.SendResponseErrors(&w, err.Error())
 		return
 	}
 
-	if err := api.VerleiheMediumHandler.Handle(cmd); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	aggregateId, err := api.VerleiheMediumHandler.Handle(cmd)
+	if err != nil {
+		rest.SendResponseErrors(&w, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"status": "medium verliehen"})
+	res := rest.NewResponseContentMessage("medium verliehen", aggregateId)
+	rest.SendResponse(res, &w)
 }
 
 func (api *MediumHandlerAPI) GebeMediumZurueck(w http.ResponseWriter, r *http.Request) {
@@ -90,11 +92,12 @@ func (api *MediumHandlerAPI) GebeMediumZurueck(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := api.RueckgebenMediumHandler.Handle(cmd); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	aggregateId, err := api.RueckgebenMediumHandler.Handle(cmd)
+	if err != nil {
+		rest.SendResponseErrors(&w, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"status": "medium zurueckgegeben"})
+	res := rest.NewResponseContentMessage("medium zurueckgegeben", aggregateId)
+	rest.SendResponse(res, &w)
 }

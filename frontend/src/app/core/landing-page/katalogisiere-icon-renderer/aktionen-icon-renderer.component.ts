@@ -20,27 +20,26 @@ export interface AktionenCellRendererParams extends ICellRendererParams<MediumBe
     MatTooltip
   ],
   template: `
-    @if (!medium()?.katalogisiert) {
-      <button
-        class="flex text-primary justify-center items-center"
-        mat-icon-button
-        matTooltip="Medium katalogisieren"
-        (click)="katalogisieren(medium()!.mediumId)"
-      >
-        <mat-icon>library_add</mat-icon>
-      </button>
-    }
-    @if (medium()?.katalogisiert) {
-      <button
-        class="flex text-primary justify-center items-center"
-        mat-icon-button
-        matTooltip="Medium verleihen"
-        (click)="verleihen(medium()!.mediumId)"
-      >
-        <mat-icon>label_important</mat-icon>
-      </button>
-    }
     <button
+      [disabled]="medium()?.katalogisiert"
+      class="flex text-primary justify-center items-center"
+      mat-icon-button
+      matTooltip="Medium katalogisieren"
+      (click)="katalogisieren(medium()!.mediumId)"
+    >
+      <mat-icon>library_add</mat-icon>
+    </button>
+    <button
+      [disabled]="!medium()?.katalogisiert"
+      class="flex text-primary justify-center items-center"
+      mat-icon-button
+      matTooltip="Medium verleihen"
+      (click)="verleihen(medium()!.mediumId)"
+    >
+      <mat-icon>label_important</mat-icon>
+    </button>
+    <button
+      [disabled]="!medium()?.katalogisiert"
       class="flex text-primary justify-center items-center"
       mat-icon-button
       matTooltip="Details ansehen"

@@ -1,0 +1,1 @@
+alter table medium_details add column katalogisiert_am timestamp

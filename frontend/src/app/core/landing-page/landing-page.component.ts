@@ -4,7 +4,8 @@ import {
   AllCommunityModule,
   ClientSideRowModelModule,
   ColDef,
-  colorSchemeDark, GridApi,
+  colorSchemeDark,
+  GridApi,
   GridReadyEvent,
   ModuleRegistry,
   themeAlpine
@@ -15,7 +16,7 @@ import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 import {KatalogisiereMediumDialogComponent} from './katalogisiere-medium-dialog/katalogisiere-medium-dialog.component';
 import {MatFormField, MatInput, MatSuffix} from '@angular/material/input';
 import {MatIconButton} from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
+import {MatIcon} from '@angular/material/icon';
 import {MatLabel} from '@angular/material/form-field';
 import {NgClass} from '@angular/common';
 import {Router} from '@angular/router';

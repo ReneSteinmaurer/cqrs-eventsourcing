@@ -1,4 +1,4 @@
-package rest
+package handlers
 
 import (
 	registrierung2 "cqrs-playground/bibliothek/nutzer/registrierung"

@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {Component, inject, input} from "@angular/core";
 import {MatButtonModule} from "@angular/material/button";
 import {MatCardModule} from "@angular/material/card";
 import {MatIconModule} from "@angular/material/icon";
@@ -6,9 +6,15 @@ import {MatTabsModule} from "@angular/material/tabs";
 import {MatBadgeModule} from '@angular/material/badge';
 import {RowLabelComponent} from '../../../shared/ui/row-label/row-label.component';
 import {CardComponent} from '../../../shared/ui/card/card.component';
-import {Router} from '@angular/router';
-import {StatusChipComponent} from './status-chip/status-chip.component';
-import {MatMenu, MatMenuItem, MatMenuTrigger} from '@angular/material/menu';
+import {ActivatedRoute, Router} from '@angular/router';
+import {StatusChipComponent} from './components/status-chip/status-chip.component';
+import {MediumDetailService} from './services/medium-detail.service';
+import {HistoryComponent} from './components/history/history.component';
+import {DatePipe} from '@angular/common';
+import {AktionenComponent} from './components/aktionen/aktionen.component';
+import {MatDialog} from '@angular/material/dialog';
+import {VerleihenComponent} from './components/verleihen/verleihen.component';
+import {ZuruecknehmenComponent} from './components/zuruecknehmen/zuruecknehmen.component';
 
 @Component({
   selector: 'app-detailseite',
@@ -21,136 +27,99 @@ import {MatMenu, MatMenuItem, MatMenuTrigger} from '@angular/material/menu';
     RowLabelComponent,
     CardComponent,
     StatusChipComponent,
-    MatMenuTrigger,
-    MatMenu,
-    MatMenuItem,
+    HistoryComponent,
+    DatePipe,
+    AktionenComponent,
   ],
   template: `
-    <div class="flex justify-center items-center">
-      <div class="p-6 space-y-6 w-full lg:w-5/6 xl:w-1/2">
-
-        <button (click)="navigateToLandingPage()" mat-stroked-button color="primary" class="mt-12 mb-4">
-          <mat-icon>arrow_back</mat-icon>
-          Zurück zur Übersicht
-        </button>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="col-span-1 md:col-span-2">
-            <app-card [title]="'Sapiens: A Brief History of Humankind'">
-              <div class="absolute top-4 right-4">
-                <app-status-chip [status]="'verliehen'"></app-status-chip>
-              </div>
-              <div class="space-y-2">
-                <p><strong>ISBN:</strong> 978-0-14-312779-9</p>
-                <p><strong>Genre:</strong> Sachbuch</p>
-                <p><strong>Typ:</strong> Buch</p>
-              </div>
-            </app-card>
+    @if (mediumDetails()) {
+      <div class="flex justify-center items-center">
+        <div class="p-6 space-y-6 w-full lg:w-5/6 xl:w-1/2 mt-12">
+          <div class="flex justify-between">
+            <button (click)="navigateToLandingPage()" mat-stroked-button color="primary" class="mb-4">
+              <mat-icon>arrow_back</mat-icon>
+              Zurück zur Übersicht
+            </button>
+            <app-aktionen (zuruecknehmen)="openZuruecknehmenDialog()" (verleihen)="openVerleihenDialog()"
+                          [aktuellVerliehen]="mediumDetails()?.aktuellVerliehen ?? false"/>
           </div>
 
-          <app-card [title]="'📍 Standortinformationen'">
-            <div class="space-y-2">
-              <p><strong>Standort:</strong> Hauptbibliothek Wien</p>
-              <p><strong>Signatur:</strong> FIC-REI-2025</p>
-              <p><strong>Exemplar-Code:</strong> EX123456789</p>
-            </div>
-          </app-card>
-
-          <app-card [title]="'📦 Verleihstatus'">
-            <div class="space-y-2">
-              <p><strong>Aktuell verliehen an:</strong> -</p>
-              <p><strong>Verliehen von:</strong> -</p>
-              <p><strong>Fällig bis:</strong> -</p>
-            </div>
-          </app-card>
-        </div>
-
-        <mat-tab-group mat-stretch-tabs [dynamicHeight]="false" class="min-h-[400px]">
-          <mat-tab label="Details">
-            <div class="p-4 space-y-4">
-              <app-card [title]="'📖 Medium-Informationen'">
-                <div class="space-y-2">
-                  <p><strong>Erworben am:</strong> 21.04.2025</p>
-                  <p><strong>Katalogisiert am:</strong> 21.04.2025</p>
-                  <p><strong>Aktueller Standort:</strong> Hauptbibliothek Wien</p>
-                  <p><strong>Exemplar-Code:</strong> EX123456789</p>
-                </div>
-              </app-card>
-            </div>
-          </mat-tab>
-
-          <mat-tab label="Historie">
-            <div class="p-4 space-y-4">
-              <div class="flex flex-col space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                <app-row-label
-                  [icon]="'library_add'"
-                  [iconClass]="'text-primary'"
-                  [label]="'21.04.2025'"
-                >
-                  Medium erworben
-                </app-row-label>
-
-                <app-row-label
-                  [icon]="'label_important'"
-                  [iconClass]="'text-primary'"
-                  [label]="'21.04.2025'"
-                >
-                  Medium katalogisiert
-                </app-row-label>
-
-                <app-row-label
-                  [icon]="'assignment_returned'"
-                  [iconClass]="'text-accent'"
-                  [label]="'22.04.2025'"
-                >
-                  Medium verliehen an Rene
-                </app-row-label>
-
-                <app-row-label
-                  [icon]="'assignment_turned_in'"
-                  [iconClass]="'text-warn'"
-                  [label]="'22.04.2025'"
-                >
-                  Medium zurückgegeben
-                </app-row-label>
+          <div class="space-x-6">
+            <app-card [title]="mediumDetails()!.titel">
+              <div class="absolute top-4 right-4">
+                <app-status-chip [status]="mediumDetails()!.status"></app-status-chip>
               </div>
-            </div>
-          </mat-tab>
-        </mat-tab-group>
+              <app-row-label label="ISBN">{{ mediumDetails()?.isbn }}</app-row-label>
+              <app-row-label label="Genre">{{ mediumDetails()?.genre }}</app-row-label>
+              <app-row-label label="Typ">{{ mediumDetails()?.typ }}</app-row-label>
+            </app-card>
 
-        <div class="flex flex-wrap justify-end gap-4 mt-4">
-          <button mat-flat-button color="primary" class="px-6">
-            Medium verleihen
-          </button>
-          <button mat-flat-button color="warn" class="px-6">
-            Medium zurücknehmen
-          </button>
-          <button mat-stroked-button color="accent" [matMenuTriggerFor]="editMenu" class="px-6">
-            <mat-icon>edit</mat-icon>
-            Bearbeiten
-          </button>
+            <app-card [title]="'📍 Standortinformationen'">
+              <app-row-label label="Standort">{{ mediumDetails()?.standort }}</app-row-label>
+              <app-row-label label="Signatur">{{ mediumDetails()?.signatur }}</app-row-label>
+              <app-row-label label="Exemplar-Code">{{ mediumDetails()?.exemplarCode }}
+              </app-row-label>
+            </app-card>
 
-          <mat-menu #editMenu="matMenu">
-            <button mat-menu-item (click)="editStandort()">
-              <mat-icon>location_on</mat-icon>
-              <span>Standort bearbeiten</span>
-            </button>
+            @if (mediumDetails()?.aktuellVerliehen) {
+              <app-card [title]="'📦 Verleihstatus'">
+                <app-row-label label="Aktuell verliehen an">{{ mediumDetails()?.verliehenAn }}</app-row-label>
+                <app-row-label label="Verliehen von">{{ mediumDetails()?.verliehenVon | date: 'dd-MM-YYYY' }}
+                </app-row-label>
+                <app-row-label label="Fällig bis">{{ mediumDetails()?.faelligBis | date: 'dd-MM-YYYY' }}</app-row-label>
+              </app-card>
+            }
+          </div>
 
-            <button mat-menu-item (click)="editBuchdaten()">
-              <mat-icon>menu_book</mat-icon>
-              <span>Buchdaten bearbeiten</span>
-            </button>
-          </mat-menu>
+          <mat-tab-group mat-stretch-tabs [dynamicHeight]="false" class="min-h-[400px]">
+            <mat-tab label="Details">
+              <div class="p-4 space-y-4">
+                <app-card [title]="'📖 Medium-Informationen'">
+                  <app-row-label label="Erworben am">{{ mediumDetails()?.erworbenAm | date: 'dd-MM-YYYY' }}
+                  </app-row-label>
+                  <app-row-label label="Katalogisiert am">{{ mediumDetails()?.katalogisiertAm | date: 'dd-MM-YYYY' }}
+                  </app-row-label>
+                  <app-row-label label="Aktueller Standort">{{ mediumDetails()?.standort }}</app-row-label>
+                  <app-row-label label="Exemplar-Code">{{ mediumDetails()?.exemplarCode }}</app-row-label>
+                </app-card>
+              </div>
+            </mat-tab>
 
+            <mat-tab label="Historie">
+              <div class="p-4 space-y-4">
+                <div class="flex flex-col space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                  <app-history [historyEvents]="mediumDetails()?.historie ?? []"/>
+                </div>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+
+          <div class="flex flex-wrap justify-end gap-4 mt-4">
+
+          </div>
         </div>
-
       </div>
-    </div>
+    }
   `,
   styles: ``
 })
 export class DetailseiteComponent {
   router = inject(Router)
+  route = inject(ActivatedRoute)
+  dialog = inject(MatDialog)
+  detailService = inject(MediumDetailService)
+  mediumId = input.required<string>({alias: 'mediumId'})
+  mediumDetails = this.detailService.details
+
+  constructor() {
+    this.route.params.subscribe(params => {
+      const mediumId = params['id']
+      if (!mediumId) {
+        return
+      }
+      this.detailService.loadDetails(mediumId)
+    })
+  }
 
   navigateToLandingPage() {
     this.router.navigate([''])
@@ -162,5 +131,19 @@ export class DetailseiteComponent {
 
   editBuchdaten() {
 
+  }
+
+  openVerleihenDialog() {
+    this.dialog.open(VerleihenComponent, {
+      width: '70%',
+      height: '40%',
+    })
+  }
+
+  openZuruecknehmenDialog() {
+    this.dialog.open(ZuruecknehmenComponent, {
+      width: '70%',
+      height: '20%',
+    })
   }
 }

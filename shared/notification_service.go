@@ -29,7 +29,7 @@ func (n *NotificationService) Notify(aggregateId string) {
 	}
 
 	log.Printf("[NOTIFICATION SERVICE] Notifying %s\n", aggregateId)
-	Retry(5, 100*time.Millisecond, func() error {
+	Retry(5, 200*time.Millisecond, func() error {
 		return n.WebSocketHub.BroadcastToAggregate(aggregateId, notification)
 	})
 }

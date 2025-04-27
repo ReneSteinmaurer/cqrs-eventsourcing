@@ -15,7 +15,9 @@ func Retry(maxRetries int, delay time.Duration, operation func() error) error {
 		}
 
 		log.Printf("Retry %d: %v\n", i+1, err)
-		time.Sleep(delay * time.Duration(i+1))
+
+		sleepTime := delay * (1 << i)
+		time.Sleep(sleepTime)
 	}
 	return fmt.Errorf("retry failed after %d attempts: %w", maxRetries, err)
 }

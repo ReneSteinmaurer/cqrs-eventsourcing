@@ -1,4 +1,4 @@
-package rest
+package handlers
 
 import (
 	"cqrs-playground/wishlist/add_item"

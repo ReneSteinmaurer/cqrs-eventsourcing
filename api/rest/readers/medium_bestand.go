@@ -1,4 +1,4 @@
-package rest
+package readers
 
 import (
 	"context"

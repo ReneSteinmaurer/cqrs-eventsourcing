@@ -1,4 +1,4 @@
-package rest
+package handlers
 
 import (
 	"cqrs-playground/shopping_cart/add_item"

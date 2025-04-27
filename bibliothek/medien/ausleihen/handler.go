@@ -41,33 +41,33 @@ func NewVerleiheMediumHandler(
 	}
 }
 
-func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) error {
+func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) (string, error) {
 	aggregateKey := cmd.MediumId
 	aggregateType := shared2.MediumAggregateType
 
 	if cmd.MediumId == "" || cmd.NutzerId == "" {
-		return errors.New("alle Felder muessen befuellt sein")
+		return "", errors.New("alle Felder muessen befuellt sein")
 	}
 
 	medium, err := v.mediumBestandReader.GetByMediumId(v.ctx, cmd.MediumId)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	nutzerExists, err := v.nutzerReader.Exists(v.ctx, cmd.NutzerId)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if !nutzerExists {
-		return errors.New("nutzer existiert nicht")
+		return "", errors.New("nutzer existiert nicht")
 	}
 
 	dur := v.leihregel.DauerFuer(medium.MediumType)
 	von := time.Now()
 	bis := von.Add(dur)
 
-	return shared.RetryHandlerBasedOnVersionConflict(func() error {
+	return aggregateKey, shared.RetryHandlerBasedOnVersionConflict(func() error {
 		aggregateEvents, err := v.eventStore.GetEventsByAggregateId(v.ctx, aggregateKey, aggregateType)
 		if err != nil {
 			return err

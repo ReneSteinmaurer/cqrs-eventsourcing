@@ -1,6 +1,6 @@
 package ausleihen
 
 type VerleiheMediumCommand struct {
-	MediumId string
-	NutzerId string
+	MediumId string `json:"mediumId"`
+	NutzerId string `json:"nutzerId"`
 }

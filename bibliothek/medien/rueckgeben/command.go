@@ -1,6 +1,6 @@
 package rueckgeben
 
 type MediumRueckgebenCommand struct {
-	MediumId string
-	NutzerId string
+	MediumId string `json:"mediumId"`
+	NutzerId string `json:"nutzerId"`
 }
