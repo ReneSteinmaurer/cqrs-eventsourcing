@@ -8,6 +8,7 @@ import {RowLabelComponent} from '../../../shared/ui/row-label/row-label.componen
 import {CardComponent} from '../../../shared/ui/card/card.component';
 import {Router} from '@angular/router';
 import {StatusChipComponent} from './status-chip/status-chip.component';
+import {MatMenu, MatMenuItem, MatMenuTrigger} from '@angular/material/menu';
 
 @Component({
   selector: 'app-detailseite',
@@ -20,6 +21,9 @@ import {StatusChipComponent} from './status-chip/status-chip.component';
     RowLabelComponent,
     CardComponent,
     StatusChipComponent,
+    MatMenuTrigger,
+    MatMenu,
+    MatMenuItem,
   ],
   template: `
     <div class="flex justify-center items-center">
@@ -121,9 +125,23 @@ import {StatusChipComponent} from './status-chip/status-chip.component';
           <button mat-flat-button color="warn" class="px-6">
             Medium zurücknehmen
           </button>
-          <button mat-stroked-button color="accent" class="px-6">
+          <button mat-stroked-button color="accent" [matMenuTriggerFor]="editMenu" class="px-6">
+            <mat-icon>edit</mat-icon>
             Bearbeiten
           </button>
+
+          <mat-menu #editMenu="matMenu">
+            <button mat-menu-item (click)="editStandort()">
+              <mat-icon>location_on</mat-icon>
+              <span>Standort bearbeiten</span>
+            </button>
+
+            <button mat-menu-item (click)="editBuchdaten()">
+              <mat-icon>menu_book</mat-icon>
+              <span>Buchdaten bearbeiten</span>
+            </button>
+          </mat-menu>
+
         </div>
 
       </div>
@@ -136,5 +154,13 @@ export class DetailseiteComponent {
 
   navigateToLandingPage() {
     this.router.navigate([''])
+  }
+
+  editStandort() {
+
+  }
+
+  editBuchdaten() {
+
   }
 }
