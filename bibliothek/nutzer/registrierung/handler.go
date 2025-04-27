@@ -3,7 +3,7 @@ package registrierung
 import (
 	"context"
 	"cqrs-playground/bibliothek/nutzer"
-	"cqrs-playground/bibliothek/nutzer/events"
+	"cqrs-playground/bibliothek/nutzer/registrierung/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"

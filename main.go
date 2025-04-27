@@ -8,9 +8,11 @@ import (
 	"cqrs-playground/bibliothek/medien/erwerben"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
 	"cqrs-playground/bibliothek/medien/projections/bestand"
+	"cqrs-playground/bibliothek/medien/projections/detailseite"
 	"cqrs-playground/bibliothek/medien/projections/isbn_index"
 	"cqrs-playground/bibliothek/medien/projections/verliehen"
 	"cqrs-playground/bibliothek/medien/rueckgeben"
+	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/bibliothek/nutzer/registrierung"
 	db2 "cqrs-playground/db"
 	"cqrs-playground/shared"
@@ -52,6 +54,12 @@ func main() {
 	mediumVerliehenProjection := verliehen.NewMediumVerliehenProjection(ctx, &eventStore, db.Pool, kafkaService)
 	mediumVerliehenProjection.Start()
 
+	mediumDetailsProjection := detailseite.NewDetailseiteProjection(ctx, &eventStore, db.Pool, kafkaService)
+	mediumDetailsProjection.Start()
+
+	nutzerProjection := nutzer.NewNutzerProjection(ctx, &eventStore, db.Pool, kafkaService)
+	nutzerProjection.Start()
+
 	addItemHandlerCart := cart_add_item.NewAddItemHandler(ctx, &eventStore)
 	removeItemHandlerCart := cart_remove_item.NewRemoveItemHandler(ctx, &eventStore)
 	cartApi := rest.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
@@ -74,6 +82,7 @@ func main() {
 		rueckgabeMediumHandler)
 
 	mediumBestandAPI := rest.NewMediumBestandAPI(db.Pool)
+	mediumDetailsAPI := rest.NewMediumDetailsAPI(db.Pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", webSocketApi.Handle)
@@ -90,6 +99,7 @@ func main() {
 	mux.HandleFunc("/bibliothek/gebe-medium-zurueck", erwerbeMediumAPI.GebeMediumZurueck)
 
 	mux.HandleFunc("/bibliothek/bestand", mediumBestandAPI.GetAll)
+	mux.HandleFunc("/bibliothek/medium", mediumDetailsAPI.GetAll)
 	corsWrapped := withCORS(mux)
 
 	log.Println("Server started at :8080")

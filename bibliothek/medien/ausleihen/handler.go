@@ -5,6 +5,7 @@ import (
 	"cqrs-playground/bibliothek/medien/ausleihen/events"
 	"cqrs-playground/bibliothek/medien/projections/bestand"
 	shared2 "cqrs-playground/bibliothek/medien/shared"
+	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"
@@ -18,6 +19,7 @@ type VerleiheMediumHandler struct {
 	kafkaService        *shared.KafkaService
 	producer            sarama.SyncProducer
 	mediumBestandReader *bestand.MediumBestandReader
+	nutzerReader        *nutzer.NutzerReader
 	leihregel           LeihregelPolicy
 	ctx                 context.Context
 }
@@ -27,11 +29,13 @@ func NewVerleiheMediumHandler(
 ) *VerleiheMediumHandler {
 	producer := kafkaService.NewSyncProducer()
 	mbr := bestand.NewMediumBestandReader(db)
+	nr := nutzer.NewNutzerReader(db)
 	return &VerleiheMediumHandler{
 		eventStore:          eventStore,
 		kafkaService:        kafkaService,
 		producer:            producer,
 		mediumBestandReader: mbr,
+		nutzerReader:        nr,
 		leihregel:           NewStandardLeihregelPolicy(),
 		ctx:                 ctx,
 	}
@@ -48,6 +52,15 @@ func (v *VerleiheMediumHandler) Handle(cmd VerleiheMediumCommand) error {
 	medium, err := v.mediumBestandReader.GetByMediumId(v.ctx, cmd.MediumId)
 	if err != nil {
 		return err
+	}
+
+	nutzerExists, err := v.nutzerReader.Exists(v.ctx, cmd.NutzerId)
+	if err != nil {
+		return err
+	}
+
+	if !nutzerExists {
+		return errors.New("nutzer existiert nicht")
 	}
 
 	dur := v.leihregel.DauerFuer(medium.MediumType)

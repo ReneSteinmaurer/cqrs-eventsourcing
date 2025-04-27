@@ -5,7 +5,7 @@ import {MatButton} from '@angular/material/button';
 @Component({
   selector: 'app-navbar',
   template: `
-    <mat-drawer-container  autosize>
+    <mat-drawer-container class="max-w-full" autosize>
       <mat-drawer #drawer mode="side" class="flex flex-row">
         <div class="flex justify-center items-center mt-4">
           <button mat-flat-button>Verleihen</button>
@@ -23,6 +23,11 @@ import {MatButton} from '@angular/material/button';
         <ng-content></ng-content>
       </mat-drawer-content>
     </mat-drawer-container>
+  `,
+  styles: `
+    .mat-drawer-container {
+      display: inherit !important;
+    }
   `,
   imports: [
     MatDrawerContainer,

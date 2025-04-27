@@ -35,28 +35,8 @@ func NewISBNIndexProjection(
 	}
 }
 
-func (cp *ISBNIndexProjection) listenToEvent(eventType string, applyFunc func([]byte)) {
-	consumer := cp.KafkaService.NewConsumerOffsetNewest(eventType)
-	defer func() {
-		log.Printf("Closing consumer for %s...\n", eventType)
-		_ = consumer.Close()
-	}()
-
-	msgs := consumer.Messages()
-
-	for {
-		select {
-		case <-cp.ctx.Done():
-			log.Printf("%s listener stopped\n", eventType)
-			return
-		case msg := <-msgs:
-			applyFunc(msg.Value)
-		}
-	}
-}
-
 func (cp *ISBNIndexProjection) Start() {
-	go cp.listenToEvent(shared2.MediumErworbenEventType, cp.applyMediumErworben)
+	go shared.ListenToEvent(cp.ctx, cp.KafkaService, shared2.MediumErworbenEventType, cp.applyMediumErworben)
 }
 
 func (cp *ISBNIndexProjection) applyMediumErworben(payloadJSON []byte) {

@@ -34,29 +34,9 @@ func NewMediumBestandProjection(
 	}
 }
 
-func (cp *MedienProjection) listenToEvent(eventType string, applyFunc func([]byte)) {
-	consumer := cp.KafkaService.NewConsumerOffsetNewest(eventType)
-	defer func() {
-		log.Printf("Closing consumer for %s...\n", eventType)
-		_ = consumer.Close()
-	}()
-
-	msgs := consumer.Messages()
-
-	for {
-		select {
-		case <-cp.ctx.Done():
-			log.Printf("%s listener stopped\n", eventType)
-			return
-		case msg := <-msgs:
-			applyFunc(msg.Value)
-		}
-	}
-}
-
 func (cp *MedienProjection) Start() {
-	go cp.listenToEvent(events.MediumErworbenEventType, cp.applyMediumErworben)
-	go cp.listenToEvent(shared2.MediumKatalogisiertEventType, cp.applyMediumKatalogisiert)
+	go shared.ListenToEvent(cp.ctx, cp.KafkaService, events.MediumErworbenEventType, cp.applyMediumErworben)
+	go shared.ListenToEvent(cp.ctx, cp.KafkaService, shared2.MediumKatalogisiertEventType, cp.applyMediumKatalogisiert)
 }
 
 func (cp *MedienProjection) applyMediumErworben(payloadJSON []byte) {

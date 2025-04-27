@@ -44,7 +44,7 @@ const myTheme = themeAlpine.withPart(colorSchemeDark).withParams({accentColor: "
     <h3 class="flex justify-center items-center mt-8">Bestand</h3>
 
     <div class="flex ml-4 mr-4 justify-center items-center">
-      <div class="w-1/2">
+      <div class="w-3/4">
         <div class="flex flex-grow justify-between">
           <div></div>
           <div class="p-2">

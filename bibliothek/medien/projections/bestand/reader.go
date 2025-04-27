@@ -29,9 +29,19 @@ func NewMediumBestandReader(db *pgxpool.Pool) *MediumBestandReader {
 func (r *MediumBestandReader) GetByMediumId(ctx context.Context, mediumId string) (*MediumBestand, error) {
 	var medium MediumBestand
 	err := r.db.QueryRow(ctx, `
-		SELECT (medium_id, isbn, medium_type, name, genre, signature, standort, exemplar_code)
-		FROM medium_bestand WHERE medium_id = $1
-	`, mediumId).Scan(&medium)
+		SELECT medium_id, isbn, medium_type, name, genre, signature, standort, exemplar_code
+		FROM medium_bestand
+		WHERE medium_id = $1
+	`, mediumId).Scan(
+		&medium.MediumId,
+		&medium.ISBN,
+		&medium.MediumType,
+		&medium.Name,
+		&medium.Genre,
+		&medium.Signature,
+		&medium.Standort,
+		&medium.ExemplarCode,
+	)
 	if err != nil {
 		return nil, err
 	}
