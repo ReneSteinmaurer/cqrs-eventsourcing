@@ -10,8 +10,8 @@ import {MediumDetailService} from '../../services/medium-detail.service';
   ],
   template: `
     <div class="p-6 max-w-full max-h-full">
-      <h3 class="text-xl font-semibold m-4">Medium verleihen</h3>
-      <p class="text-sm text-gray-400 text-center">
+      <h3 class="text-xl font-semibold m-4">Medium zurückgegeben</h3>
+      <p class="text-sm text-gray-400 mt-4 text-center">
         Bist du sicher, dass du das Medium als zurückgenommen markieren möchtest?
       </p>
 
