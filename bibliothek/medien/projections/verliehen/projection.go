@@ -4,6 +4,7 @@ import (
 	"context"
 	"cqrs-playground/bibliothek/medien/ausleihen/events"
 	shared2 "cqrs-playground/bibliothek/medien/rueckgeben/events"
+	events2 "cqrs-playground/bibliothek/medien/verlieren/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -35,6 +36,7 @@ func NewMediumVerliehenProjection(
 func (mv *MediumVerliehenProjection) Start() {
 	go shared.ListenToEvent(mv.ctx, mv.KafkaService, events.MediumVerliehenEventType, mv.applyMediumVerliehen)
 	go shared.ListenToEvent(mv.ctx, mv.KafkaService, shared2.MediumZurueckgegebenEventType, mv.applyMediumZurueckgegeben)
+	go shared.ListenToEvent(mv.ctx, mv.KafkaService, shared2.MediumZurueckgegebenEventType, mv.applyMediumVerloren)
 }
 
 func (mv *MediumVerliehenProjection) applyMediumVerliehen(payloadJSON []byte) {
@@ -58,6 +60,23 @@ func (mv *MediumVerliehenProjection) applyMediumVerliehen(payloadJSON []byte) {
 
 func (mv *MediumVerliehenProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
 	var payload shared2.MediumZurueckgegebenEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		delete from medium_verliehen where medium_id = $1 and nutzer_id = $2;
+	`
+
+	_, err := mv.DB.Exec(mv.ctx, query, payload.MediumId, payload.NutzerId)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+	}
+}
+
+func (mv *MediumVerliehenProjection) applyMediumVerloren(payloadJSON []byte) {
+	var payload events2.MediumVerlorenDurchBenutzerEvent
 	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return

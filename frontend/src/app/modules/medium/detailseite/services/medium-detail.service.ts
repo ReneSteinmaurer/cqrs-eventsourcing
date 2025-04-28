@@ -3,15 +3,15 @@ import {HttpClient} from '@angular/common/http';
 import {MediumDetail} from '../types/medium-details';
 import {Nutzer} from '../../../../shared/types/nutzer';
 import {RestResponse} from '../../../../shared/types/rest-response';
-import {WebsocketService} from '../../../../shared/services/websocket.service';
 import {EMPTY, tap} from 'rxjs';
+import {RestHelperService} from '../../../../shared/services/rest-helper.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MediumDetailService {
   http = inject(HttpClient)
-  socketService = inject(WebsocketService)
+  rest = inject(RestHelperService)
   #details = signal<MediumDetail | undefined>(undefined)
   details = this.#details.asReadonly()
 
@@ -36,15 +36,18 @@ export class MediumDetailService {
       console.error('medium id is nullish!')
       return EMPTY
     }
-    return this.http.post<RestResponse<string>>('http://localhost:8080/bibliothek/verleihe-medium', {nutzerId, mediumId}).pipe(tap(res => {
-      if (res.errors.length > 0) {
-        // todo handle errors
-        return
+    // todo handle errors
+    return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/verleihe-medium', {
+      nutzerId,
+      mediumId
+    }).pipe(tap({
+      next: () => {
+        this.loadDetails(mediumId);
+      },
+      error: (err) => {
+        console.error('Fehler beim Verleihen:', err);
       }
-      this.socketService.listen(res.data).subscribe(() => {
-        this.loadDetails(mediumId)
-      });
-    }));
+    }))
   }
 
   zurueckgeben() {
@@ -54,14 +57,38 @@ export class MediumDetailService {
       console.error('mediumId or nutzerId is nullish!')
       return EMPTY
     }
-    return this.http.post<RestResponse<string>>('http://localhost:8080/bibliothek/gebe-medium-zurueck', {nutzerId, mediumId}).pipe(tap(res => {
-      if (res.errors.length > 0) {
-        // todo handle errors
-        return
+    // todo handle errors
+    return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/gebe-medium-zurueck', {
+      nutzerId,
+      mediumId
+    }).pipe(tap({
+      next: () => {
+        this.loadDetails(mediumId);
+      },
+      error: (err) => {
+        console.error('Fehler beim Verleihen:', err);
       }
-      this.socketService.listen(res.data).subscribe(() => {
-        this.loadDetails(mediumId)
-      });
-    }));
+    }))
+  }
+
+  verlorenDurchNutzer() {
+    const mediumId = this.#details()?.mediumId
+    const nutzerId = this.#details()?.verliehenNutzerId
+    if (!mediumId || !nutzerId) {
+      console.error('mediumId or nutzerId is nullish!')
+      return EMPTY
+    }
+    // todo handle errors
+    return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/verloren-durch-nutzer', {
+      nutzerId,
+      mediumId
+    }).pipe(tap({
+      next: () => {
+        this.loadDetails(mediumId);
+      },
+      error: (err) => {
+        console.error('Fehler beim Verleihen:', err);
+      }
+    }))
   }
 }

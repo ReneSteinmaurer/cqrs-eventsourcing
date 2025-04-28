@@ -6,6 +6,7 @@ import (
 	"cqrs-playground/bibliothek/medien/erwerben"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
 	"cqrs-playground/bibliothek/medien/rueckgeben"
+	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
 	"encoding/json"
 	"net/http"
 )
@@ -15,6 +16,7 @@ type MediumHandlerAPI struct {
 	KatalogisiereMediumHandler *katalogisieren.KatalogisiereMediumHandler
 	VerleiheMediumHandler      *ausleihen.VerleiheMediumHandler
 	RueckgebenMediumHandler    *rueckgeben.MediumRueckgabeHandler
+	VerlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler
 }
 
 func NewErwerbeMediumAPI(
@@ -22,12 +24,14 @@ func NewErwerbeMediumAPI(
 	katalogisiereMediumHandler *katalogisieren.KatalogisiereMediumHandler,
 	verleiheMediumHandler *ausleihen.VerleiheMediumHandler,
 	rueckgebenMediumHandler *rueckgeben.MediumRueckgabeHandler,
+	verlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler,
 ) *MediumHandlerAPI {
 	return &MediumHandlerAPI{
 		ErwerbeMediumHandler:       erwerbeMediumHandler,
 		KatalogisiereMediumHandler: katalogisiereMediumHandler,
 		VerleiheMediumHandler:      verleiheMediumHandler,
 		RueckgebenMediumHandler:    rueckgebenMediumHandler,
+		VerlorenDurchNutzerHandler: verlorenDurchNutzerHandler,
 	}
 }
 
@@ -99,5 +103,23 @@ func (api *MediumHandlerAPI) GebeMediumZurueck(w http.ResponseWriter, r *http.Re
 	}
 
 	res := rest.NewResponseContentMessage("medium zurueckgegeben", aggregateId)
+	rest.SendResponse(res, &w)
+}
+
+func (api *MediumHandlerAPI) MediumVerlorenVonNutzer(w http.ResponseWriter, r *http.Request) {
+	var cmd verloren_duch_benutzer.MediumVerlorenDurchBenutzerCommand
+
+	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	aggregateId, err := api.VerlorenDurchNutzerHandler.Handle(cmd)
+	if err != nil {
+		rest.SendResponseErrors(&w, err.Error())
+		return
+	}
+
+	res := rest.NewResponseContentMessage("medium verloren", aggregateId)
 	rest.SendResponse(res, &w)
 }

@@ -14,7 +14,8 @@ import {DatePipe} from '@angular/common';
 import {AktionenComponent} from './components/aktionen/aktionen.component';
 import {MatDialog} from '@angular/material/dialog';
 import {VerleihenComponent} from './components/verleihen/verleihen.component';
-import {ZuruecknehmenComponent} from './components/zuruecknehmen/zuruecknehmen.component';
+import {ZuruecknehmenDialogComponent} from './components/zuruecknehmen/zuruecknehmen-dialog.component';
+import {VerlorenDurchNutzerComponent} from './components/verloren-durch-nutzer/verloren-durch-nutzer-dialog.component';
 
 @Component({
   selector: 'app-detailseite',
@@ -40,8 +41,10 @@ import {ZuruecknehmenComponent} from './components/zuruecknehmen/zuruecknehmen.c
               <mat-icon>arrow_back</mat-icon>
               Zurück zur Übersicht
             </button>
-            <app-aktionen (zuruecknehmen)="openZuruecknehmenDialog()" (verleihen)="openVerleihenDialog()"
-                          [aktuellVerliehen]="mediumDetails()?.aktuellVerliehen ?? false"/>
+            <app-aktionen (verlorenDurchNutzer)="openVerlorenDurchNutzerDialog()"
+                          (zuruecknehmen)="openZuruecknehmenDialog()" (verleihen)="openVerleihenDialog()"
+                          [aktuellVerliehen]="mediumDetails()?.aktuellVerliehen ?? false"
+                          [verloren]="mediumDetails()?.status === 'VERLOREN'"/> <!-- do better -->
           </div>
 
           <div class="space-x-6">
@@ -125,14 +128,6 @@ export class DetailseiteComponent {
     this.router.navigate([''])
   }
 
-  editStandort() {
-
-  }
-
-  editBuchdaten() {
-
-  }
-
   openVerleihenDialog() {
     this.dialog.open(VerleihenComponent, {
       width: '70%',
@@ -141,7 +136,14 @@ export class DetailseiteComponent {
   }
 
   openZuruecknehmenDialog() {
-    this.dialog.open(ZuruecknehmenComponent, {
+    this.dialog.open(ZuruecknehmenDialogComponent, {
+      width: '70%',
+      height: '20%',
+    })
+  }
+
+  openVerlorenDurchNutzerDialog() {
+    this.dialog.open(VerlorenDurchNutzerComponent, {
       width: '70%',
       height: '20%',
     })

@@ -56,6 +56,7 @@ func (cp *MedienProjection) applyMediumErworben(payloadJSON []byte) {
 	if err != nil {
 		log.Println("Error updating read-model:", err)
 	}
+	cp.NotificationService.Notify(payload.MediumId)
 }
 
 func (cp *MedienProjection) applyMediumKatalogisiert(payloadJSON []byte) {

@@ -5,6 +5,7 @@ import (
 	events2 "cqrs-playground/bibliothek/medien/erwerben/events"
 	events3 "cqrs-playground/bibliothek/medien/katalogisieren/events"
 	events4 "cqrs-playground/bibliothek/medien/rueckgeben/events"
+	events5 "cqrs-playground/bibliothek/medien/verlieren/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"
@@ -23,6 +24,8 @@ type MediumAggregate struct {
 	VerliehenVon        *time.Time
 	VerliehenBis        *time.Time
 	VerliehenAnNutzerId string
+	Verloren            bool
+	VerlorenVonNutzerId string
 }
 
 func NewMediumAggregate(events []shared.Event) *MediumAggregate {
@@ -44,8 +47,6 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 		m.Name = e.Name
 		m.Genre = e.Genre
 	case events3.MediumKatalogisiertEventType:
-		var e events3.MediumKatalogisiertEvent
-		_ = json.Unmarshal(event.Payload, &e)
 		m.Katalogisiert = true
 	case events.MediumVerliehenEventType:
 		var e events.MediumVerliehenEvent
@@ -54,11 +55,17 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 		m.VerliehenBis = &e.Bis
 		m.VerliehenAnNutzerId = e.NutzerId
 	case events4.MediumZurueckgegebenEventType:
-		var e events4.MediumZurueckgegebenEvent
+		m.VerliehenVon = nil
+		m.VerliehenBis = nil
+		m.VerliehenAnNutzerId = ""
+	case events5.MediumVerlorenDurchBenutzerEventType:
+		var e events5.MediumVerlorenDurchBenutzerEvent
 		_ = json.Unmarshal(event.Payload, &e)
 		m.VerliehenVon = nil
 		m.VerliehenBis = nil
 		m.VerliehenAnNutzerId = ""
+		m.Verloren = true
+		m.VerlorenVonNutzerId = e.NutzerId
 	}
 }
 
@@ -72,6 +79,9 @@ func (m *MediumAggregate) HandleMediumErwerben(event events2.MediumErworbenEvent
 func (m *MediumAggregate) HandleMediumVerleihen(event events.MediumVerliehenEvent) error {
 	if m.MediumId != event.MediumId {
 		return errors.New("es gibt noch kein Medium mit dieser Id im System")
+	}
+	if m.Verloren {
+		return errors.New("das medium ist als verloren markiert und kann nicht verleihen werden")
 	}
 	if !m.isKatalogisiert() {
 		return errors.New("das Medium ist noch nicht katalogisiert")
@@ -92,6 +102,23 @@ func (m *MediumAggregate) HandleMediumZurueckgegeben(event events4.MediumZurueck
 	}
 	if !m.isKatalogisiert() {
 		return errors.New("das Medium ist noch nicht katalogisiert")
+	}
+	if m.VerliehenAnNutzerId != event.NutzerId {
+		return errors.New("dieser nutzer hat das medium nicht ausgeliehen")
+	}
+	if !m.isVerliehen() {
+		return errors.New("das Medium ist derzeit nicht verliehen")
+	}
+
+	return nil
+}
+
+func (m *MediumAggregate) HandleMediumVerlorenDurchBenutzer(event events5.MediumVerlorenDurchBenutzerEvent) error {
+	if m.Verloren {
+		return errors.New("das medium ist als verloren markiert und kann nicht verloren werden")
+	}
+	if m.MediumId != event.MediumId {
+		return errors.New("es gibt noch kein Medium mit dieser Id im System")
 	}
 	if m.VerliehenAnNutzerId != event.NutzerId {
 		return errors.New("dieser nutzer hat das medium nicht ausgeliehen")

@@ -23,8 +23,8 @@ import {MediumDetailService} from '../../services/medium-detail.service';
   `,
   styles: ``
 })
-export class ZuruecknehmenComponent {
-  private dialogRef = inject(MatDialogRef<ZuruecknehmenComponent>);
+export class ZuruecknehmenDialogComponent {
+  private dialogRef = inject(MatDialogRef<ZuruecknehmenDialogComponent>);
   detailService = inject(MediumDetailService)
 
   cancel() {

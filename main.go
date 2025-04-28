@@ -13,6 +13,7 @@ import (
 	"cqrs-playground/bibliothek/medien/projections/isbn_index"
 	"cqrs-playground/bibliothek/medien/projections/verliehen"
 	"cqrs-playground/bibliothek/medien/rueckgeben"
+	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
 	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/bibliothek/nutzer/registrierung"
 	db2 "cqrs-playground/db"
@@ -76,11 +77,13 @@ func main() {
 	katalogisiereMediumHandler := katalogisieren.NewKatalogisiereMediumHandler(ctx, &eventStore, kafkaService)
 	verleiheMediumHandler := ausleihen.NewVerleiheMediumHandler(ctx, &eventStore, kafkaService, db.Pool)
 	rueckgabeMediumHandler := rueckgeben.NewMediumRueckgabeHandler(ctx, &eventStore, kafkaService, db.Pool)
-	erwerbeMediumAPI := handlers.NewErwerbeMediumAPI(
+	verlorenDurchNutzerHandler := verloren_duch_benutzer.NewMediumVerlorenDurchBenutzerHandler(ctx, &eventStore, kafkaService)
+	mediumAPI := handlers.NewErwerbeMediumAPI(
 		erwerbeMediumHandler,
 		katalogisiereMediumHandler,
 		verleiheMediumHandler,
-		rueckgabeMediumHandler)
+		rueckgabeMediumHandler,
+		verlorenDurchNutzerHandler)
 
 	mediumBestandAPI := readers.NewMediumBestandAPI(db.Pool)
 	mediumDetailsAPI := readers.NewMediumDetailsAPI(db.Pool)
@@ -95,10 +98,11 @@ func main() {
 	mux.HandleFunc("/wishlist/remove-item", wishlistApi.RemoveItem)
 
 	mux.HandleFunc("/bibliothek/registriere-nutzer", nutzerRegistrierungApi.RegistriereNutzer)
-	mux.HandleFunc("/bibliothek/erwerbe-medium", erwerbeMediumAPI.ErwerbeMedium)
-	mux.HandleFunc("/bibliothek/katalogisiere-medium", erwerbeMediumAPI.KatalogisiereMedium)
-	mux.HandleFunc("/bibliothek/verleihe-medium", erwerbeMediumAPI.VerleiheMedium)
-	mux.HandleFunc("/bibliothek/gebe-medium-zurueck", erwerbeMediumAPI.GebeMediumZurueck)
+	mux.HandleFunc("/bibliothek/erwerbe-medium", mediumAPI.ErwerbeMedium)
+	mux.HandleFunc("/bibliothek/katalogisiere-medium", mediumAPI.KatalogisiereMedium)
+	mux.HandleFunc("/bibliothek/verleihe-medium", mediumAPI.VerleiheMedium)
+	mux.HandleFunc("/bibliothek/gebe-medium-zurueck", mediumAPI.GebeMediumZurueck)
+	mux.HandleFunc("/bibliothek/verloren-durch-nutzer", mediumAPI.MediumVerlorenVonNutzer)
 
 	mux.HandleFunc("/bibliothek/bestand", mediumBestandAPI.GetAll)
 	mux.HandleFunc("/bibliothek/medium", mediumDetailsAPI.GetAll)

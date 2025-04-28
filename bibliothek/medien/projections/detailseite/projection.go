@@ -6,6 +6,7 @@ import (
 	events2 "cqrs-playground/bibliothek/medien/erwerben/events"
 	events3 "cqrs-playground/bibliothek/medien/katalogisieren/events"
 	events5 "cqrs-playground/bibliothek/medien/rueckgeben/events"
+	"cqrs-playground/bibliothek/medien/verlieren/events"
 	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/shared"
 	"encoding/json"
@@ -16,6 +17,7 @@ import (
 const (
 	MediumErworben      = "ERWORBEN"
 	MediumKatalogisiert = "KATALOGISIERT"
+	MediumVerloren      = "VERLOREN"
 	MediumVerliehen     = "VERLIEHEN"
 )
 
@@ -51,6 +53,7 @@ func (d *DetailseiteProjection) Start() {
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events3.MediumKatalogisiertEventType, d.applyMediumKatalogisiert)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events4.MediumVerliehenEventType, d.applyMediumVerliehen)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events5.MediumZurueckgegebenEventType, d.applyMediumZurueckgegeben)
+	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumVerlorenDurchBenutzerEventType, d.applyMediumVerlorenDurchNutzer)
 }
 
 func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
@@ -174,6 +177,49 @@ func (d *DetailseiteProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
 	}
 
 	if err := d.saveHistoryEvent(payload.MediumId, events5.MediumZurueckgegebenEventType, payload); err != nil {
+		log.Println("Error saving history event:", err)
+		return
+	}
+	d.notificationService.Notify(payload.MediumId)
+}
+
+func (d *DetailseiteProjection) applyMediumVerlorenDurchNutzer(payloadJSON []byte) {
+	var payload events.MediumVerlorenDurchBenutzerEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	nutzerModel, err := d.nutzerReader.GetNutzer(d.ctx, payload.NutzerId)
+	if err != nil {
+		log.Println("Error reading from nutzerModel table:", err)
+		return
+	}
+
+	const query = `
+		UPDATE medium_details
+		SET 
+		    verliehen_an = $1,
+			verliehen_von = $2,
+			faellig_bis = $3,
+			aktuell_verliehen = false,
+			status = $4,
+			verliehen_an_nutzer_id = $5,
+			verloren_am = now(),
+			verloren = true,
+			verloren_von_nutzer_id = $6,
+			verloren_nutzer_name = $7
+		WHERE medium_id = $8
+	`
+
+	name := nutzerModel.Vorname + " " + nutzerModel.Nachname
+	_, err = d.DB.Exec(d.ctx, query, nil, nil, nil, MediumVerloren, nil, nutzerModel.NutzerId, name, payload.MediumId)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+		return
+	}
+
+	if err := d.saveHistoryEvent(payload.MediumId, events.MediumVerlorenDurchBenutzerEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
 		return
 	}

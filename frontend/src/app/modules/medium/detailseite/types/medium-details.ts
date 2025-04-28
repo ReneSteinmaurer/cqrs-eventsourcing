@@ -1,7 +1,8 @@
 const MediumStatusKeys = [
   'ERWORBEN',
   'KATALOGISIERT',
-  'VERLIEHEN'
+  'VERLIEHEN',
+  'VERLOREN'
 ] as const
 
 export type MediumStatus = typeof MediumStatusKeys[number]
@@ -61,6 +62,12 @@ interface MediumZurueckgegebenPayload {
   Date?: Date;
 }
 
+interface MediumVerlorenPayload {
+  MediumId: string;
+  NutzerId: string;
+  Date?: Date;
+}
+
 export type MediumErworbenEvent = BaseHistoryEvent<MediumErworbenPayload> & {
   eventType: 'MediumErworbenEvent';
 };
@@ -77,4 +84,8 @@ export type MediumZurueckgegebenEvent = BaseHistoryEvent<MediumZurueckgegebenPay
   eventType: 'MediumZurueckgegebenEvent';
 };
 
-export type HistoryEvent = MediumErworbenEvent | MediumKatalogisiertEvent | MediumVerliehenEvent | MediumZurueckgegebenEvent;
+export type MediumVerlorenDurchBenutzerEvent = BaseHistoryEvent<MediumZurueckgegebenPayload> & {
+  eventType: 'MediumVerlorenDurchBenutzerEvent';
+};
+
+export type HistoryEvent = MediumErworbenEvent | MediumKatalogisiertEvent | MediumVerliehenEvent | MediumZurueckgegebenEvent | MediumVerlorenDurchBenutzerEvent;

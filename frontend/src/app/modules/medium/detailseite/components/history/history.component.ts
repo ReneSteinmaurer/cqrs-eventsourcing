@@ -4,7 +4,7 @@ import {
   HistoryEvent,
   MediumErworbenEvent,
   MediumKatalogisiertEvent,
-  MediumVerliehenEvent,
+  MediumVerliehenEvent, MediumVerlorenDurchBenutzerEvent,
   MediumZurueckgegebenEvent
 } from '../../types/medium-details';
 import {DatePipe} from '@angular/common';
@@ -55,7 +55,8 @@ import {DatePipe} from '@angular/common';
 
               @if (isZurueckgegeben(event)) {
                 <span class="font-semibold text-gray-100 text-sm">
-              Medium zurückgegeben von <span class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+              Medium zurückgegeben von <span
+                  class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
             </span>
                 @if (event.payload.Date) {
                   <span class="text-gray-400 text-xs mt-1">
@@ -63,6 +64,18 @@ import {DatePipe} from '@angular/common';
               </span>
                 }
               }
+
+              @if (isVerlorenDurchNutzer(event)) {
+                <span class="font-semibold text-gray-100 text-sm">
+              Medium verloren von <span class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+            </span>
+                @if (event.payload.Date) {
+                  <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+                }
+              }
+
 
             </div>
           </app-row-label>
@@ -89,5 +102,10 @@ export class HistoryComponent {
   isZurueckgegeben(event: HistoryEvent): event is MediumZurueckgegebenEvent {
     return event.eventType === 'MediumZurueckgegebenEvent';
   }
+
+  isVerlorenDurchNutzer(event: HistoryEvent): event is MediumVerlorenDurchBenutzerEvent {
+    return event.eventType === 'MediumVerlorenDurchBenutzerEvent';
+  }
+
 
 }
