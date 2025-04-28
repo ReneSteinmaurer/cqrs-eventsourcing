@@ -17,6 +17,9 @@ import {VerleihenComponent} from './components/verleihen/verleihen.component';
 import {ZuruecknehmenDialogComponent} from './components/zuruecknehmen/zuruecknehmen-dialog.component';
 import {VerlorenDurchNutzerComponent} from './components/verloren-durch-nutzer/verloren-durch-nutzer-dialog.component';
 import {BestandsverlustDialogComponent} from './components/bestandsverlust-dialog/bestandsverlust-dialog.component';
+import {
+  BestandsverlustAufhebenDialogComponent
+} from './components/bestandsverlust-aufheben-dialog/bestandsverlust-aufheben-dialog.component';
 
 @Component({
   selector: 'app-detailseite',
@@ -45,6 +48,7 @@ import {BestandsverlustDialogComponent} from './components/bestandsverlust-dialo
             <app-aktionen (verlorenDurchNutzer)="openVerlorenDurchNutzerDialog()"
                           (zuruecknehmen)="openZuruecknehmenDialog()"
                           (verleihen)="openVerleihenDialog()"
+                          (wiederaufgefunden)="openWiederaufgefundenDialog()"
                           (bestandsverlust)="openBestandsverlustDialog()"
                           [aktuellVerliehen]="mediumDetails()?.aktuellVerliehen ?? false"
                           [verloren]="mediumDetails()?.status === 'VERLOREN'"/> <!-- do better -->
@@ -154,6 +158,13 @@ export class DetailseiteComponent {
 
   openBestandsverlustDialog() {
     this.dialog.open(BestandsverlustDialogComponent, {
+      width: '70%',
+      height: '20%',
+    })
+  }
+
+  openWiederaufgefundenDialog() {
+    this.dialog.open(BestandsverlustAufhebenDialogComponent, {
       width: '70%',
       height: '20%',
     })

@@ -6,6 +6,7 @@ import (
 	events3 "cqrs-playground/bibliothek/medien/katalogisieren/events"
 	events4 "cqrs-playground/bibliothek/medien/rueckgeben/events"
 	events5 "cqrs-playground/bibliothek/medien/verlieren/events"
+	events6 "cqrs-playground/bibliothek/medien/wiederaufgefunden/events"
 	"cqrs-playground/shared"
 	"encoding/json"
 	"errors"
@@ -71,6 +72,8 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 		m.VerliehenBis = nil
 		m.VerliehenAnNutzerId = ""
 		m.Verloren = true
+	case events6.MediumWiederaufgefundenEventType:
+		m.Verloren = false
 	}
 }
 
@@ -141,6 +144,19 @@ func (m *MediumAggregate) HandleMediumBestandsverlust(event events5.MediumBestan
 	}
 	if m.MediumId != event.MediumId {
 		return errors.New("es gibt noch kein Medium mit dieser Id im System")
+	}
+	return nil
+}
+
+func (m *MediumAggregate) HandleMediumWiederaufgefunden(event events6.MediumWiederaufgefundenEvent) error {
+	if m.MediumId != event.MediumId {
+		return errors.New("es gibt noch kein Medium mit dieser Id im System")
+	}
+	if !m.Verloren {
+		return errors.New("das Medium ist nicht als verloren markiert und kann somit nicht wiederaufgefunden werden")
+	}
+	if m.isVerliehen() {
+		return errors.New("das Medium ist verliehen und kann somit nicht als wiederaufgefunden markiert werden")
 	}
 	return nil
 }

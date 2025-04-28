@@ -110,4 +110,23 @@ export class MediumDetailService {
       }
     }))
   }
+
+  bestandsverlustAufheben() {
+    const mediumId = this.#details()?.mediumId
+    if (!mediumId) {
+      console.error('mediumId is nullish!')
+      return EMPTY
+    }
+    // todo handle errors
+    return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/bestandsverlust-aufheben', {
+      mediumId
+    }).pipe(tap({
+      next: () => {
+        this.loadDetails(mediumId);
+      },
+      error: (err) => {
+        console.error('Fehler:', err);
+      }
+    }))
+  }
 }

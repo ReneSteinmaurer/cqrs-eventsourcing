@@ -8,17 +8,19 @@ import (
 	"cqrs-playground/bibliothek/medien/rueckgeben"
 	"cqrs-playground/bibliothek/medien/verlieren/bestands_verlust"
 	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
+	bestands_verlust2 "cqrs-playground/bibliothek/medien/wiederaufgefunden/bestands_verlust"
 	"encoding/json"
 	"net/http"
 )
 
 type MediumHandlerAPI struct {
-	ErwerbeMediumHandler       *erwerben.ErwerbeMediumHandler
-	KatalogisiereMediumHandler *katalogisieren.KatalogisiereMediumHandler
-	VerleiheMediumHandler      *ausleihen.VerleiheMediumHandler
-	RueckgebenMediumHandler    *rueckgeben.MediumRueckgabeHandler
-	VerlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler
-	BestandsverlustHandler     *bestands_verlust.MediumBestandsverlustHandler
+	ErwerbeMediumHandler           *erwerben.ErwerbeMediumHandler
+	KatalogisiereMediumHandler     *katalogisieren.KatalogisiereMediumHandler
+	VerleiheMediumHandler          *ausleihen.VerleiheMediumHandler
+	RueckgebenMediumHandler        *rueckgeben.MediumRueckgabeHandler
+	VerlorenDurchNutzerHandler     *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler
+	BestandsverlustHandler         *bestands_verlust.MediumBestandsverlustHandler
+	BestandsverlustAufhebenHandler *bestands_verlust2.MediumBestandsverlustAufhebenHandler
 }
 
 func NewErwerbeMediumAPI(
@@ -28,14 +30,16 @@ func NewErwerbeMediumAPI(
 	rueckgebenMediumHandler *rueckgeben.MediumRueckgabeHandler,
 	verlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler,
 	bestandsverlustHandler *bestands_verlust.MediumBestandsverlustHandler,
+	bestandsverlustAufhebenHandler *bestands_verlust2.MediumBestandsverlustAufhebenHandler,
 ) *MediumHandlerAPI {
 	return &MediumHandlerAPI{
-		ErwerbeMediumHandler:       erwerbeMediumHandler,
-		KatalogisiereMediumHandler: katalogisiereMediumHandler,
-		VerleiheMediumHandler:      verleiheMediumHandler,
-		RueckgebenMediumHandler:    rueckgebenMediumHandler,
-		VerlorenDurchNutzerHandler: verlorenDurchNutzerHandler,
-		BestandsverlustHandler:     bestandsverlustHandler,
+		ErwerbeMediumHandler:           erwerbeMediumHandler,
+		KatalogisiereMediumHandler:     katalogisiereMediumHandler,
+		VerleiheMediumHandler:          verleiheMediumHandler,
+		RueckgebenMediumHandler:        rueckgebenMediumHandler,
+		VerlorenDurchNutzerHandler:     verlorenDurchNutzerHandler,
+		BestandsverlustHandler:         bestandsverlustHandler,
+		BestandsverlustAufhebenHandler: bestandsverlustAufhebenHandler,
 	}
 }
 
@@ -137,6 +141,24 @@ func (api *MediumHandlerAPI) MediumBestandsverlust(w http.ResponseWriter, r *htt
 	}
 
 	aggregateId, err := api.BestandsverlustHandler.Handle(cmd)
+	if err != nil {
+		rest.SendResponseErrors(&w, err.Error())
+		return
+	}
+
+	res := rest.NewResponseContentMessage("medium verloren", aggregateId)
+	rest.SendResponse(res, &w)
+}
+
+func (api *MediumHandlerAPI) MediumBestandsverlustAufheben(w http.ResponseWriter, r *http.Request) {
+	var cmd bestands_verlust2.MediumBestandsverlustAufhebenCommand
+
+	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	aggregateId, err := api.BestandsverlustAufhebenHandler.Handle(cmd)
 	if err != nil {
 		rest.SendResponseErrors(&w, err.Error())
 		return

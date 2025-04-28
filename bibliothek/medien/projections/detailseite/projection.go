@@ -7,6 +7,7 @@ import (
 	events3 "cqrs-playground/bibliothek/medien/katalogisieren/events"
 	events5 "cqrs-playground/bibliothek/medien/rueckgeben/events"
 	"cqrs-playground/bibliothek/medien/verlieren/events"
+	events6 "cqrs-playground/bibliothek/medien/wiederaufgefunden/events"
 	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/shared"
 	"encoding/json"
@@ -55,6 +56,7 @@ func (d *DetailseiteProjection) Start() {
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events5.MediumZurueckgegebenEventType, d.applyMediumZurueckgegeben)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumVerlorenDurchBenutzerEventType, d.applyMediumVerlorenDurchNutzer)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumBestandsverlustEventType, d.applyMediumBestandsverlust)
+	go shared.ListenToEvent(d.ctx, d.KafkaService, events6.MediumWiederaufgefundenEventType, d.applyMediumWiederaufgefunden)
 }
 
 func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
@@ -255,6 +257,35 @@ func (d *DetailseiteProjection) applyMediumBestandsverlust(payloadJSON []byte) {
 	}
 
 	if err := d.saveHistoryEvent(payload.MediumId, events.MediumBestandsverlustEventType, payload); err != nil {
+		log.Println("Error saving history event:", err)
+		return
+	}
+	d.notificationService.Notify(payload.MediumId)
+}
+
+func (d *DetailseiteProjection) applyMediumWiederaufgefunden(payloadJSON []byte) {
+	var payload events6.MediumWiederaufgefundenEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		UPDATE medium_details
+		SET 
+			status = $1,
+			verloren_am = $2,
+			verloren = false
+		WHERE medium_id = $3
+	`
+
+	_, err := d.DB.Exec(d.ctx, query, MediumKatalogisiert, nil, payload.MediumId)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+		return
+	}
+
+	if err := d.saveHistoryEvent(payload.MediumId, events6.MediumWiederaufgefundenEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
 		return
 	}

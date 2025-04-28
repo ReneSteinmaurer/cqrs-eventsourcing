@@ -15,6 +15,7 @@ import (
 	"cqrs-playground/bibliothek/medien/rueckgeben"
 	"cqrs-playground/bibliothek/medien/verlieren/bestands_verlust"
 	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
+	wiederaufgefunden "cqrs-playground/bibliothek/medien/wiederaufgefunden/bestands_verlust"
 	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/bibliothek/nutzer/registrierung"
 	db2 "cqrs-playground/db"
@@ -80,13 +81,16 @@ func main() {
 	rueckgabeMediumHandler := rueckgeben.NewMediumRueckgabeHandler(ctx, &eventStore, kafkaService, db.Pool)
 	verlorenDurchNutzerHandler := verloren_duch_benutzer.NewMediumVerlorenDurchBenutzerHandler(ctx, &eventStore, kafkaService)
 	bestandsverlustHandler := bestands_verlust.NewMediumBestandsverlustHandler(ctx, &eventStore, kafkaService)
+	bestandsverlustAufhebenHandler := wiederaufgefunden.NewMediumBestandsverlustAufhebenHandler(ctx, &eventStore, kafkaService)
+
 	mediumAPI := handlers.NewErwerbeMediumAPI(
 		erwerbeMediumHandler,
 		katalogisiereMediumHandler,
 		verleiheMediumHandler,
 		rueckgabeMediumHandler,
 		verlorenDurchNutzerHandler,
-		bestandsverlustHandler)
+		bestandsverlustHandler,
+		bestandsverlustAufhebenHandler)
 
 	mediumBestandAPI := readers.NewMediumBestandAPI(db.Pool)
 	mediumDetailsAPI := readers.NewMediumDetailsAPI(db.Pool)
@@ -107,6 +111,7 @@ func main() {
 	mux.HandleFunc("/bibliothek/gebe-medium-zurueck", mediumAPI.GebeMediumZurueck)
 	mux.HandleFunc("/bibliothek/verloren-durch-nutzer", mediumAPI.MediumVerlorenVonNutzer)
 	mux.HandleFunc("/bibliothek/bestandsverlust", mediumAPI.MediumBestandsverlust)
+	mux.HandleFunc("/bibliothek/bestandsverlust-aufheben", mediumAPI.MediumBestandsverlustAufheben)
 
 	mux.HandleFunc("/bibliothek/bestand", mediumBestandAPI.GetAll)
 	mux.HandleFunc("/bibliothek/medium", mediumDetailsAPI.GetAll)

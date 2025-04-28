@@ -55,6 +55,10 @@ import {MatIcon} from '@angular/material/icon';
           }
         </mat-menu>
       </div>
+    } @else {
+      <button (click)="wiederaufgefunden.emit()" mat-flat-button class="px-6">
+        Medium wiederaufgefunden
+      </button>
     }
   `,
   styles: ``
@@ -68,5 +72,6 @@ export class AktionenComponent {
   verleihen = output<void>()
   zuruecknehmen = output<void>()
   bestandsverlust = output<void>();
+  wiederaufgefunden = output<void>();
 
 }
