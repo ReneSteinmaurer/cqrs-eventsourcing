@@ -41,6 +41,12 @@ import {MatIcon} from '@angular/material/icon';
             <span>Daten korrigieren</span>
           </button>
 
+          @if (!aktuellVerliehen()) {
+            <button mat-menu-item (click)="bestandsverlust.emit()">
+              <mat-icon>close</mat-icon>
+              <span>Medium verloren</span>
+            </button>
+          }
           @if (aktuellVerliehen()) {
             <button mat-menu-item (click)="verlorenDurchNutzer.emit()">
               <mat-icon>close</mat-icon>
@@ -61,5 +67,6 @@ export class AktionenComponent {
   verlorenDurchNutzer = output<void>()
   verleihen = output<void>()
   zuruecknehmen = output<void>()
+  bestandsverlust = output<void>();
 
 }

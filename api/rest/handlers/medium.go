@@ -6,6 +6,7 @@ import (
 	"cqrs-playground/bibliothek/medien/erwerben"
 	"cqrs-playground/bibliothek/medien/katalogisieren"
 	"cqrs-playground/bibliothek/medien/rueckgeben"
+	"cqrs-playground/bibliothek/medien/verlieren/bestands_verlust"
 	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
 	"encoding/json"
 	"net/http"
@@ -17,6 +18,7 @@ type MediumHandlerAPI struct {
 	VerleiheMediumHandler      *ausleihen.VerleiheMediumHandler
 	RueckgebenMediumHandler    *rueckgeben.MediumRueckgabeHandler
 	VerlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler
+	BestandsverlustHandler     *bestands_verlust.MediumBestandsverlustHandler
 }
 
 func NewErwerbeMediumAPI(
@@ -25,6 +27,7 @@ func NewErwerbeMediumAPI(
 	verleiheMediumHandler *ausleihen.VerleiheMediumHandler,
 	rueckgebenMediumHandler *rueckgeben.MediumRueckgabeHandler,
 	verlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler,
+	bestandsverlustHandler *bestands_verlust.MediumBestandsverlustHandler,
 ) *MediumHandlerAPI {
 	return &MediumHandlerAPI{
 		ErwerbeMediumHandler:       erwerbeMediumHandler,
@@ -32,6 +35,7 @@ func NewErwerbeMediumAPI(
 		VerleiheMediumHandler:      verleiheMediumHandler,
 		RueckgebenMediumHandler:    rueckgebenMediumHandler,
 		VerlorenDurchNutzerHandler: verlorenDurchNutzerHandler,
+		BestandsverlustHandler:     bestandsverlustHandler,
 	}
 }
 
@@ -115,6 +119,24 @@ func (api *MediumHandlerAPI) MediumVerlorenVonNutzer(w http.ResponseWriter, r *h
 	}
 
 	aggregateId, err := api.VerlorenDurchNutzerHandler.Handle(cmd)
+	if err != nil {
+		rest.SendResponseErrors(&w, err.Error())
+		return
+	}
+
+	res := rest.NewResponseContentMessage("medium verloren", aggregateId)
+	rest.SendResponse(res, &w)
+}
+
+func (api *MediumHandlerAPI) MediumBestandsverlust(w http.ResponseWriter, r *http.Request) {
+	var cmd bestands_verlust.MediumBestandsverlustCommand
+
+	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	aggregateId, err := api.BestandsverlustHandler.Handle(cmd)
 	if err != nil {
 		rest.SendResponseErrors(&w, err.Error())
 		return

@@ -87,7 +87,26 @@ export class MediumDetailService {
         this.loadDetails(mediumId);
       },
       error: (err) => {
-        console.error('Fehler beim Verleihen:', err);
+        console.error('Fehler:', err);
+      }
+    }))
+  }
+
+  bestandsverlust() {
+    const mediumId = this.#details()?.mediumId
+    if (!mediumId) {
+      console.error('mediumId is nullish!')
+      return EMPTY
+    }
+    // todo handle errors
+    return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/bestandsverlust', {
+      mediumId
+    }).pipe(tap({
+      next: () => {
+        this.loadDetails(mediumId);
+      },
+      error: (err) => {
+        console.error('Fehler:', err);
       }
     }))
   }

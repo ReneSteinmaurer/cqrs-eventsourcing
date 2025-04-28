@@ -54,6 +54,7 @@ func (d *DetailseiteProjection) Start() {
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events4.MediumVerliehenEventType, d.applyMediumVerliehen)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events5.MediumZurueckgegebenEventType, d.applyMediumZurueckgegeben)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumVerlorenDurchBenutzerEventType, d.applyMediumVerlorenDurchNutzer)
+	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumBestandsverlustEventType, d.applyMediumBestandsverlust)
 }
 
 func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
@@ -220,6 +221,40 @@ func (d *DetailseiteProjection) applyMediumVerlorenDurchNutzer(payloadJSON []byt
 	}
 
 	if err := d.saveHistoryEvent(payload.MediumId, events.MediumVerlorenDurchBenutzerEventType, payload); err != nil {
+		log.Println("Error saving history event:", err)
+		return
+	}
+	d.notificationService.Notify(payload.MediumId)
+}
+
+func (d *DetailseiteProjection) applyMediumBestandsverlust(payloadJSON []byte) {
+	var payload events.MediumBestandsverlustEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		UPDATE medium_details
+		SET 
+		    verliehen_an = $1,
+			verliehen_von = $2,
+			faellig_bis = $3,
+			aktuell_verliehen = false,
+			status = $4,
+			verliehen_an_nutzer_id = $5,
+			verloren_am = now(),
+			verloren = true
+		WHERE medium_id = $6
+	`
+
+	_, err := d.DB.Exec(d.ctx, query, nil, nil, nil, MediumVerloren, nil, payload.MediumId)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+		return
+	}
+
+	if err := d.saveHistoryEvent(payload.MediumId, events.MediumBestandsverlustEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
 		return
 	}

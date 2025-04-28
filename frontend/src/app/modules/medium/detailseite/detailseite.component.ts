@@ -16,6 +16,7 @@ import {MatDialog} from '@angular/material/dialog';
 import {VerleihenComponent} from './components/verleihen/verleihen.component';
 import {ZuruecknehmenDialogComponent} from './components/zuruecknehmen/zuruecknehmen-dialog.component';
 import {VerlorenDurchNutzerComponent} from './components/verloren-durch-nutzer/verloren-durch-nutzer-dialog.component';
+import {BestandsverlustDialogComponent} from './components/bestandsverlust-dialog/bestandsverlust-dialog.component';
 
 @Component({
   selector: 'app-detailseite',
@@ -42,7 +43,9 @@ import {VerlorenDurchNutzerComponent} from './components/verloren-durch-nutzer/v
               Zurück zur Übersicht
             </button>
             <app-aktionen (verlorenDurchNutzer)="openVerlorenDurchNutzerDialog()"
-                          (zuruecknehmen)="openZuruecknehmenDialog()" (verleihen)="openVerleihenDialog()"
+                          (zuruecknehmen)="openZuruecknehmenDialog()"
+                          (verleihen)="openVerleihenDialog()"
+                          (bestandsverlust)="openBestandsverlustDialog()"
                           [aktuellVerliehen]="mediumDetails()?.aktuellVerliehen ?? false"
                           [verloren]="mediumDetails()?.status === 'VERLOREN'"/> <!-- do better -->
           </div>
@@ -144,6 +147,13 @@ export class DetailseiteComponent {
 
   openVerlorenDurchNutzerDialog() {
     this.dialog.open(VerlorenDurchNutzerComponent, {
+      width: '70%',
+      height: '20%',
+    })
+  }
+
+  openBestandsverlustDialog() {
+    this.dialog.open(BestandsverlustDialogComponent, {
       width: '70%',
       height: '20%',
     })

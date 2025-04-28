@@ -4,6 +4,7 @@ import "time"
 
 const (
 	MediumVerlorenDurchBenutzerEventType = "MediumVerlorenDurchBenutzerEvent"
+	MediumBestandsverlustEventType       = "MediumBestandsverlustEvent"
 )
 
 type MediumVerlorenDurchBenutzerEvent struct {
@@ -16,6 +17,18 @@ func NewMediumVerlorenEvent(mediumId, nutzerId string, date time.Time) MediumVer
 	return MediumVerlorenDurchBenutzerEvent{
 		MediumId: mediumId,
 		NutzerId: nutzerId,
+		Date:     date,
+	}
+}
+
+type MediumBestandsverlustEvent struct {
+	MediumId string
+	Date     time.Time
+}
+
+func NewMediumBestandsverlustEvent(mediumId string, date time.Time) MediumBestandsverlustEvent {
+	return MediumBestandsverlustEvent{
+		MediumId: mediumId,
 		Date:     date,
 	}
 }

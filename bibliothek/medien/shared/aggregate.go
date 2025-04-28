@@ -66,6 +66,11 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 		m.VerliehenAnNutzerId = ""
 		m.Verloren = true
 		m.VerlorenVonNutzerId = e.NutzerId
+	case events5.MediumBestandsverlustEventType:
+		m.VerliehenVon = nil
+		m.VerliehenBis = nil
+		m.VerliehenAnNutzerId = ""
+		m.Verloren = true
 	}
 }
 
@@ -127,6 +132,16 @@ func (m *MediumAggregate) HandleMediumVerlorenDurchBenutzer(event events5.Medium
 		return errors.New("das Medium ist derzeit nicht verliehen")
 	}
 
+	return nil
+}
+
+func (m *MediumAggregate) HandleMediumBestandsverlust(event events5.MediumBestandsverlustEvent) error {
+	if m.Verloren {
+		return errors.New("das medium ist als verloren markiert und kann nicht verloren werden")
+	}
+	if m.MediumId != event.MediumId {
+		return errors.New("es gibt noch kein Medium mit dieser Id im System")
+	}
 	return nil
 }
 
