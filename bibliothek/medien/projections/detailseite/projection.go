@@ -57,6 +57,7 @@ func (d *DetailseiteProjection) Start() {
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumVerlorenDurchBenutzerEventType, d.applyMediumVerlorenDurchNutzer)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events.MediumBestandsverlustEventType, d.applyMediumBestandsverlust)
 	go shared.ListenToEvent(d.ctx, d.KafkaService, events6.MediumWiederaufgefundenEventType, d.applyMediumWiederaufgefunden)
+	go shared.ListenToEvent(d.ctx, d.KafkaService, events6.MediumWiederaufgefundenDurchNutzerEventType, d.applyMediumWiederaufgefundenDurchNutzer)
 }
 
 func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
@@ -277,6 +278,37 @@ func (d *DetailseiteProjection) applyMediumWiederaufgefunden(payloadJSON []byte)
 			status = $1,
 			verloren_am = $2,
 			verloren = false
+		WHERE medium_id = $3
+	`
+
+	_, err := d.DB.Exec(d.ctx, query, MediumKatalogisiert, nil, payload.MediumId)
+	if err != nil {
+		log.Println("Error updating read-model:", err)
+		return
+	}
+
+	if err := d.saveHistoryEvent(payload.MediumId, events6.MediumWiederaufgefundenEventType, payload); err != nil {
+		log.Println("Error saving history event:", err)
+		return
+	}
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
+}
+
+func (d *DetailseiteProjection) applyMediumWiederaufgefundenDurchNutzer(payloadJSON []byte) {
+	var payload events6.MediumWiederaufgefundenDurchNutzerEvent
+	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
+		log.Println("Error unmarshalling event:", err)
+		return
+	}
+
+	const query = `
+		UPDATE medium_details
+		SET 
+			status = $1,
+			verloren_am = $2,
+			verloren = false,
+			verloren_nutzer_name = null,
+			verloren_von_nutzer_id = null
 		WHERE medium_id = $3
 	`
 

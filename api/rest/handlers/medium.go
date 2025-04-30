@@ -9,18 +9,20 @@ import (
 	"cqrs-playground/bibliothek/medien/verlieren/bestands_verlust"
 	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
 	bestands_verlust2 "cqrs-playground/bibliothek/medien/wiederaufgefunden/bestands_verlust"
+	bestands_verlust3 "cqrs-playground/bibliothek/medien/wiederaufgefunden/wiederaufgefunden_durch_nutzer"
 	"encoding/json"
 	"net/http"
 )
 
 type MediumHandlerAPI struct {
-	ErwerbeMediumHandler           *erwerben.ErwerbeMediumHandler
-	KatalogisiereMediumHandler     *katalogisieren.KatalogisiereMediumHandler
-	VerleiheMediumHandler          *ausleihen.VerleiheMediumHandler
-	RueckgebenMediumHandler        *rueckgeben.MediumRueckgabeHandler
-	VerlorenDurchNutzerHandler     *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler
-	BestandsverlustHandler         *bestands_verlust.MediumBestandsverlustHandler
-	BestandsverlustAufhebenHandler *bestands_verlust2.MediumBestandsverlustAufhebenHandler
+	ErwerbeMediumHandler                *erwerben.ErwerbeMediumHandler
+	KatalogisiereMediumHandler          *katalogisieren.KatalogisiereMediumHandler
+	VerleiheMediumHandler               *ausleihen.VerleiheMediumHandler
+	RueckgebenMediumHandler             *rueckgeben.MediumRueckgabeHandler
+	VerlorenDurchNutzerHandler          *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler
+	BestandsverlustHandler              *bestands_verlust.MediumBestandsverlustHandler
+	BestandsverlustAufhebenHandler      *bestands_verlust2.MediumBestandsverlustAufhebenHandler
+	WiederaufgefundenDurchNutzerHandler *bestands_verlust3.MediumWiederaufgefundenDurchNutzerHandler
 }
 
 func NewErwerbeMediumAPI(
@@ -31,15 +33,17 @@ func NewErwerbeMediumAPI(
 	verlorenDurchNutzerHandler *verloren_duch_benutzer.MediumVerlorenDurchBenutzerHandler,
 	bestandsverlustHandler *bestands_verlust.MediumBestandsverlustHandler,
 	bestandsverlustAufhebenHandler *bestands_verlust2.MediumBestandsverlustAufhebenHandler,
+	wiederaufgefundenDurchNutzerHandler *bestands_verlust3.MediumWiederaufgefundenDurchNutzerHandler,
 ) *MediumHandlerAPI {
 	return &MediumHandlerAPI{
-		ErwerbeMediumHandler:           erwerbeMediumHandler,
-		KatalogisiereMediumHandler:     katalogisiereMediumHandler,
-		VerleiheMediumHandler:          verleiheMediumHandler,
-		RueckgebenMediumHandler:        rueckgebenMediumHandler,
-		VerlorenDurchNutzerHandler:     verlorenDurchNutzerHandler,
-		BestandsverlustHandler:         bestandsverlustHandler,
-		BestandsverlustAufhebenHandler: bestandsverlustAufhebenHandler,
+		ErwerbeMediumHandler:                erwerbeMediumHandler,
+		KatalogisiereMediumHandler:          katalogisiereMediumHandler,
+		VerleiheMediumHandler:               verleiheMediumHandler,
+		RueckgebenMediumHandler:             rueckgebenMediumHandler,
+		VerlorenDurchNutzerHandler:          verlorenDurchNutzerHandler,
+		BestandsverlustHandler:              bestandsverlustHandler,
+		BestandsverlustAufhebenHandler:      bestandsverlustAufhebenHandler,
+		WiederaufgefundenDurchNutzerHandler: wiederaufgefundenDurchNutzerHandler,
 	}
 }
 
@@ -159,6 +163,24 @@ func (api *MediumHandlerAPI) MediumBestandsverlustAufheben(w http.ResponseWriter
 	}
 
 	aggregateId, err := api.BestandsverlustAufhebenHandler.Handle(cmd)
+	if err != nil {
+		rest.SendResponseErrors(&w, err.Error())
+		return
+	}
+
+	res := rest.NewResponseContentMessage("medium verloren", aggregateId)
+	rest.SendResponse(res, &w)
+}
+
+func (api *MediumHandlerAPI) MediumWiederaufgefundenDurchNutzer(w http.ResponseWriter, r *http.Request) {
+	var cmd bestands_verlust3.MediumWiederaufgefundenDurchNutzerCommand
+
+	if err := json.NewDecoder(r.Body).Decode(&cmd); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	aggregateId, err := api.WiederaufgefundenDurchNutzerHandler.Handle(cmd)
 	if err != nil {
 		rest.SendResponseErrors(&w, err.Error())
 		return

@@ -74,6 +74,9 @@ func (m *MediumAggregate) Apply(event shared.Event) {
 		m.Verloren = true
 	case events6.MediumWiederaufgefundenEventType:
 		m.Verloren = false
+	case events6.MediumWiederaufgefundenDurchNutzerEventType:
+		m.Verloren = false
+		m.VerlorenVonNutzerId = ""
 	}
 }
 
@@ -157,6 +160,22 @@ func (m *MediumAggregate) HandleMediumWiederaufgefunden(event events6.MediumWied
 	}
 	if m.isVerliehen() {
 		return errors.New("das Medium ist verliehen und kann somit nicht als wiederaufgefunden markiert werden")
+	}
+	return nil
+}
+
+func (m *MediumAggregate) HandleMediumWiederaufgefundenDurchNutzer(event events6.MediumWiederaufgefundenDurchNutzerEvent) error {
+	if m.MediumId != event.MediumId {
+		return errors.New("es gibt noch kein Medium mit dieser Id im System")
+	}
+	if !m.Verloren {
+		return errors.New("das Medium ist nicht als verloren markiert und kann somit nicht wiederaufgefunden werden")
+	}
+	if !m.isVerliehen() {
+		return errors.New("das Medium ist nicht verliehen und kann somit nicht als wiederaufgefunden markiert werden")
+	}
+	if m.VerliehenAnNutzerId != event.NutzerId {
+		return errors.New("das Medium wurde nicht an diesen Nutzer ausgeliehen und kann somit nicht als wiederaufgefunden markiert werden")
 	}
 	return nil
 }
