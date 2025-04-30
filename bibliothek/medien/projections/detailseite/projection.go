@@ -98,7 +98,8 @@ func (d *DetailseiteProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 			standort = $2,
 			exemplar_code = $3,
 			status = $4,
-			katalogisiert_am = now()
+			katalogisiert_am = now(),
+			verloren = false
 		WHERE medium_id = $5
 	`
 

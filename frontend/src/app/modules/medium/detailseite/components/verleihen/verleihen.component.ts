@@ -7,6 +7,7 @@ import {toSignal} from '@angular/core/rxjs-interop';
 import {MatAutocomplete, MatAutocompleteTrigger, MatOption} from '@angular/material/autocomplete';
 import {MediumDetailService} from '../../services/medium-detail.service';
 import {debounceTime} from 'rxjs';
+import {ToastService} from '../../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-verleihen',
@@ -89,6 +90,6 @@ export class VerleihenComponent {
     }
     this.detailService.verleihen(this.customerInputId.value!).subscribe(() => {
       this.dialogRef.close();
-    })
+    });
   }
 }

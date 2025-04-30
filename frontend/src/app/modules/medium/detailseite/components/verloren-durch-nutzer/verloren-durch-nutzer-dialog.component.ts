@@ -3,6 +3,7 @@ import {MatButton} from '@angular/material/button';
 import {MatDialogRef} from '@angular/material/dialog';
 import {MediumDetailService} from '../../services/medium-detail.service';
 import {ConfirmationDialogComponent} from '../../../../../shared/ui/confirmation-dialog/confirmation-dialog.component';
+import {ToastService} from '../../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-verloren-durch-nutzer-dialog',
@@ -28,7 +29,7 @@ export class VerlorenDurchNutzerComponent {
 
   confirm() {
     this.detailService.verlorenDurchNutzer().subscribe(() => {
-      this.dialogRef.close()
-    })
+      this.dialogRef.close();
+    });
   }
 }

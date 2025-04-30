@@ -1,6 +1,6 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Observable, switchMap, throwError} from 'rxjs';
+import {EMPTY, Observable, switchMap, throwError} from 'rxjs';
 import {RestResponse} from '../types/rest-response';
 import {WebsocketService} from './websocket.service';
 
@@ -15,7 +15,8 @@ export class RestHelperService {
     return this.http.post<RestResponse<string>>(url, data).pipe(
       switchMap(res => {
         if (res.errors.length > 0) {
-          return throwError(() => new Error('Post-Fehler: ' + res.errors.join(', ')));
+          console.error('Post-Fehler: ' + res.errors.join(', '));
+          return EMPTY
         }
 
         const aggregateId = res.data;
