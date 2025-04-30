@@ -1,10 +1,10 @@
 import {Component, input} from '@angular/core';
 import {RowLabelComponent} from '../../../../../shared/ui/row-label/row-label.component';
 import {
-  HistoryEvent,
+  HistoryEvent, MediumBestandsverlustEvent,
   MediumErworbenEvent,
   MediumKatalogisiertEvent,
-  MediumVerliehenEvent, MediumVerlorenDurchBenutzerEvent,
+  MediumVerliehenEvent, MediumVerlorenDurchBenutzerEvent, MediumWiederaufgefundenEvent,
   MediumZurueckgegebenEvent
 } from '../../types/medium-details';
 import {DatePipe} from '@angular/common';
@@ -76,7 +76,23 @@ import {DatePipe} from '@angular/common';
                 }
               }
 
+              @if (isBestandsverlustAufheben(event)) {
+                <span class="font-semibold text-gray-100 text-sm">
+                  Bestandsverlust wurde aufgehoben
+            </span>
+                <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+              }
 
+              @if (isBestandsverlust(event)) {
+                <span class="font-semibold text-gray-100 text-sm">
+                    Medium wurde als Bestandsverlust markiert
+            </span>
+                <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+              }
             </div>
           </app-row-label>
         </div>
@@ -107,5 +123,11 @@ export class HistoryComponent {
     return event.eventType === 'MediumVerlorenDurchBenutzerEvent';
   }
 
+  isBestandsverlustAufheben(event: HistoryEvent): event is MediumWiederaufgefundenEvent {
+    return event.eventType === 'MediumWiederaufgefundenEvent';
+  }
 
+  isBestandsverlust(event: HistoryEvent): event is MediumBestandsverlustEvent {
+    return event.eventType === 'MediumBestandsverlustEvent';
+  }
 }

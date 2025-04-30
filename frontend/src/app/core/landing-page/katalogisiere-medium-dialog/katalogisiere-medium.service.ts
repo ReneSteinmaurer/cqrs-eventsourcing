@@ -3,6 +3,8 @@ import {HttpClient, httpResource} from '@angular/common/http';
 import {RestResponse} from '../../../shared/types/rest-response';
 import {LandingPageService} from '../landing-page.service';
 import {WebSocketMessage, WebsocketService} from '../../../shared/services/websocket.service';
+import {RestHelperService} from '../../../shared/services/rest-helper.service';
+import {tap} from 'rxjs';
 
 export type KatalogisiereCommand = {
   MediumId: string
@@ -15,17 +17,17 @@ export type KatalogisiereCommand = {
   providedIn: 'root'
 })
 export class KatalogisiereMediumService {
-  private http = inject(HttpClient)
-  private websocketService = inject(WebsocketService)
-  landingPageService = inject(LandingPageService)
+  private restHelper = inject(RestHelperService)
+  private landingPageService = inject(LandingPageService)
 
   katalogisiereMedium(cmd: KatalogisiereCommand) {
-    this.http.post<RestResponse<string>>('http://localhost:8080/bibliothek/katalogisiere-medium', {...cmd}).subscribe(res => {
-      this.websocketService.listen(res.data).subscribe((msg) => {
-        if (msg.type === 'PROJECTION_UPDATED') {
-          this.landingPageService.medien.reload()
-        }
-      });
+    this.restHelper.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/katalogisiere-medium', cmd).subscribe({
+      next: () => {
+        this.landingPageService.medien.reload();
+      },
+      error: (err) => {
+        console.error('Fehler beim Verleihen:', err);
+      }
     });
   }
 }

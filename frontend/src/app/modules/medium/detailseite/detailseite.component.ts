@@ -13,13 +13,13 @@ import {HistoryComponent} from './components/history/history.component';
 import {DatePipe} from '@angular/common';
 import {AktionenComponent} from './components/aktionen/aktionen.component';
 import {MatDialog} from '@angular/material/dialog';
-import {VerleihenComponent} from './components/verleihen/verleihen.component';
-import {ZuruecknehmenDialogComponent} from './components/zuruecknehmen/zuruecknehmen-dialog.component';
-import {VerlorenDurchNutzerComponent} from './components/verloren-durch-nutzer/verloren-durch-nutzer-dialog.component';
-import {BestandsverlustDialogComponent} from './components/bestandsverlust-dialog/bestandsverlust-dialog.component';
+import {VerleihenComponent} from './components/aktionen/verleihen/verleihen.component';
+import {ZuruecknehmenDialogComponent} from './components/aktionen/zuruecknehmen/zuruecknehmen-dialog.component';
+import {VerlorenDurchNutzerComponent} from './components/aktionen/verloren-durch-nutzer/verloren-durch-nutzer-dialog.component';
+import {BestandsverlustDialogComponent} from './components/aktionen/bestandsverlust-dialog/bestandsverlust-dialog.component';
 import {
   BestandsverlustAufhebenDialogComponent
-} from './components/bestandsverlust-aufheben-dialog/bestandsverlust-aufheben-dialog.component';
+} from './components/aktionen/bestandsverlust-aufheben-dialog/bestandsverlust-aufheben-dialog.component';
 
 @Component({
   selector: 'app-detailseite',

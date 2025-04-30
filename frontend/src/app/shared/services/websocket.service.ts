@@ -18,14 +18,30 @@ export type WebSocketMessage<T> = {
   providedIn: 'root'
 })
 export class WebsocketService {
-  private wsSubject: WebSocketSubject<WebSocketMessage<string>> | null = null;
+  private connections = new Map<string, WebSocketSubject<WebSocketMessage<string>>>();
 
-  listen(aggregateId: string): Observable<WebSocketMessage<string>>{
-    this.wsSubject = webSocket<WebSocketMessage<string>>({
+  listen(aggregateId: string): Observable<WebSocketMessage<string>> {
+    const existing = this.connections.get(aggregateId);
+
+    if (existing && !existing.closed) {
+      return existing;
+    }
+
+    const ws = webSocket<WebSocketMessage<string>>({
       url: `ws://localhost:8080/ws?aggregateId=${aggregateId}`,
       deserializer: msg => JSON.parse(msg.data)
-    })
-    return this.wsSubject;
+    });
+
+    this.connections.set(aggregateId, ws);
+    return ws;
+  }
+
+  close(aggregateId: string): void {
+    const ws = this.connections.get(aggregateId);
+    if (ws && !ws.closed) {
+      ws.complete();
+    }
+    this.connections.delete(aggregateId);
   }
 
 }

@@ -1,7 +1,7 @@
 import {Component, inject} from '@angular/core';
-import {ConfirmationDialogComponent} from '../../../../../shared/ui/confirmation-dialog/confirmation-dialog.component';
+import {ConfirmationDialogComponent} from '../../../../../../shared/ui/confirmation-dialog/confirmation-dialog.component';
 import {MatDialogRef} from '@angular/material/dialog';
-import {MediumDetailService} from '../../services/medium-detail.service';
+import {MediumDetailService} from '../../../services/medium-detail.service';
 
 @Component({
   selector: 'app-bestandsverlust-dialog',

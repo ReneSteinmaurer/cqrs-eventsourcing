@@ -1,9 +1,9 @@
 import {Component, inject} from '@angular/core';
 import {MatButton} from '@angular/material/button';
 import {MatDialogRef} from '@angular/material/dialog';
-import {MediumDetailService} from '../../services/medium-detail.service';
-import {ConfirmationDialogComponent} from '../../../../../shared/ui/confirmation-dialog/confirmation-dialog.component';
-import {ToastService} from '../../../../../shared/services/toast.service';
+import {MediumDetailService} from '../../../services/medium-detail.service';
+import {ConfirmationDialogComponent} from '../../../../../../shared/ui/confirmation-dialog/confirmation-dialog.component';
+import {ToastService} from '../../../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-verloren-durch-nutzer-dialog',

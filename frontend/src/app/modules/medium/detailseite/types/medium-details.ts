@@ -62,10 +62,20 @@ interface MediumZurueckgegebenPayload {
   Date?: Date;
 }
 
-interface MediumVerlorenPayload {
+interface MediumVerlorenDurchNutzerPayload {
   MediumId: string;
   NutzerId: string;
-  Date?: Date;
+  Date: Date;
+}
+
+interface MediumBestandsverlustPayload {
+  MediumId: string;
+  Date: Date;
+}
+
+interface MediumWiederaufgefundenPayload {
+  MediumId: string;
+  Date: Date;
 }
 
 export type MediumErworbenEvent = BaseHistoryEvent<MediumErworbenPayload> & {
@@ -84,8 +94,23 @@ export type MediumZurueckgegebenEvent = BaseHistoryEvent<MediumZurueckgegebenPay
   eventType: 'MediumZurueckgegebenEvent';
 };
 
-export type MediumVerlorenDurchBenutzerEvent = BaseHistoryEvent<MediumZurueckgegebenPayload> & {
+export type MediumVerlorenDurchBenutzerEvent = BaseHistoryEvent<MediumVerlorenDurchNutzerPayload> & {
   eventType: 'MediumVerlorenDurchBenutzerEvent';
 };
 
-export type HistoryEvent = MediumErworbenEvent | MediumKatalogisiertEvent | MediumVerliehenEvent | MediumZurueckgegebenEvent | MediumVerlorenDurchBenutzerEvent;
+export type MediumBestandsverlustEvent = BaseHistoryEvent<MediumBestandsverlustPayload> & {
+  eventType: 'MediumBestandsverlustEvent';
+};
+
+export type MediumWiederaufgefundenEvent = BaseHistoryEvent<MediumWiederaufgefundenPayload> & {
+  eventType: 'MediumWiederaufgefundenEvent';
+};
+
+export type HistoryEvent =
+  MediumErworbenEvent |
+  MediumKatalogisiertEvent |
+  MediumVerliehenEvent |
+  MediumZurueckgegebenEvent |
+  MediumVerlorenDurchBenutzerEvent |
+  MediumWiederaufgefundenEvent |
+  MediumBestandsverlustEvent;
