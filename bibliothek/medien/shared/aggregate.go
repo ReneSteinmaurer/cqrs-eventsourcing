@@ -171,10 +171,7 @@ func (m *MediumAggregate) HandleMediumWiederaufgefundenDurchNutzer(event events6
 	if !m.Verloren {
 		return errors.New("das Medium ist nicht als verloren markiert und kann somit nicht wiederaufgefunden werden")
 	}
-	if !m.isVerliehen() {
-		return errors.New("das Medium ist nicht verliehen und kann somit nicht als wiederaufgefunden markiert werden")
-	}
-	if m.VerliehenAnNutzerId != event.NutzerId {
+	if m.VerlorenVonNutzerId != event.NutzerId {
 		return errors.New("das Medium wurde nicht an diesen Nutzer ausgeliehen und kann somit nicht als wiederaufgefunden markiert werden")
 	}
 	return nil

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"cqrs-playground/api/rest/handlers"
-	"cqrs-playground/api/rest/readers"
+	nutzer2 "cqrs-playground/api/rest/readers"
 	"cqrs-playground/api/ws"
 	"cqrs-playground/bibliothek/medien/ausleihen"
 	"cqrs-playground/bibliothek/medien/erwerben"
@@ -17,6 +17,7 @@ import (
 	"cqrs-playground/bibliothek/medien/verlieren/verloren_duch_benutzer"
 	wiederaufgefunden "cqrs-playground/bibliothek/medien/wiederaufgefunden/bestands_verlust"
 	wiederaufgefunden2 "cqrs-playground/bibliothek/medien/wiederaufgefunden/wiederaufgefunden_durch_nutzer"
+	nutzer_detail "cqrs-playground/bibliothek/nutzer/projections/detailseite"
 	"cqrs-playground/bibliothek/nutzer/projections/nutzer"
 	"cqrs-playground/bibliothek/nutzer/registrierung"
 	db2 "cqrs-playground/db"
@@ -65,6 +66,9 @@ func main() {
 	nutzerProjection := nutzer.NewNutzerProjection(ctx, &eventStore, db.Pool, kafkaService)
 	nutzerProjection.Start()
 
+	nutzerDetailProjection := nutzer_detail.NewDetailseiteProjection(ctx, &eventStore, db.Pool, kafkaService, notificationService)
+	nutzerDetailProjection.Start()
+
 	addItemHandlerCart := cart_add_item.NewAddItemHandler(ctx, &eventStore)
 	removeItemHandlerCart := cart_remove_item.NewRemoveItemHandler(ctx, &eventStore)
 	cartApi := handlers.NewCartApi(addItemHandlerCart, removeItemHandlerCart)
@@ -95,9 +99,11 @@ func main() {
 		bestandsverlustAufhebenHandler,
 		wiederaufgefundenDurchNutzer)
 
-	mediumBestandAPI := readers.NewMediumBestandAPI(db.Pool)
-	mediumDetailsAPI := readers.NewMediumDetailsAPI(db.Pool)
-	nutzerAPI := readers.NewNutzerAPI(db.Pool)
+	mediumBestandAPI := nutzer2.NewMediumBestandAPI(db.Pool)
+	mediumDetailsAPI := nutzer2.NewMediumDetailsAPI(db.Pool)
+
+	nutzerAPI := nutzer2.NewNutzerAPI(db.Pool)
+	nutzerDetailsAPI := nutzer2.NewNutzerDetailsAPI(db.Pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", webSocketApi.Handle)
@@ -121,6 +127,7 @@ func main() {
 	mux.HandleFunc("/bibliothek/medium", mediumDetailsAPI.GetAll)
 
 	mux.HandleFunc("/nutzer/find-by-email", nutzerAPI.FindNutzerByEmailPrefix)
+	mux.HandleFunc("/nutzer", nutzerDetailsAPI.GetAll)
 
 	corsWrapped := withCORS(mux)
 

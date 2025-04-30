@@ -129,4 +129,25 @@ export class MediumDetailService {
       }
     }))
   }
+
+  wiederaufgefundenDurchNutzer() {
+    const mediumId = this.#details()?.mediumId
+    const nutzerId = this.#details()?.verlorenVonNutzerId
+    if (!mediumId || !nutzerId) {
+      console.error('mediumId or nutzerId is nullish!')
+      return EMPTY
+    }
+    // todo handle errors
+    return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/wiederaufgefunden-durch-nutzer', {
+      nutzerId,
+      mediumId
+    }).pipe(tap({
+      next: () => {
+        this.loadDetails(mediumId);
+      },
+      error: (err) => {
+        console.error('Fehler:', err);
+      }
+    }))
+  }
 }

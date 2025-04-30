@@ -318,7 +318,7 @@ func (d *DetailseiteProjection) applyMediumWiederaufgefundenDurchNutzer(payloadJ
 		return
 	}
 
-	if err := d.saveHistoryEvent(payload.MediumId, events6.MediumWiederaufgefundenEventType, payload); err != nil {
+	if err := d.saveHistoryEvent(payload.MediumId, events6.MediumWiederaufgefundenDurchNutzerEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
 		return
 	}

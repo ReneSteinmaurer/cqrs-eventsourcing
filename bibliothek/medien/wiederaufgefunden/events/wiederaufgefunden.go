@@ -28,6 +28,7 @@ type MediumWiederaufgefundenDurchNutzerEvent struct {
 func NewMediumWiederaufgefundenDurchNutzerEvent(mediumId, nutzerId string, date time.Time) MediumWiederaufgefundenDurchNutzerEvent {
 	return MediumWiederaufgefundenDurchNutzerEvent{
 		MediumId: mediumId,
+		NutzerId: nutzerId,
 		Date:     date,
 	}
 }

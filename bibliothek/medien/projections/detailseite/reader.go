@@ -14,22 +14,25 @@ type MediumHistorieEntry struct {
 }
 
 type MediumDetail struct {
-	MediumID          string     `json:"mediumId"`
-	ISBN              string     `json:"isbn"`
-	Titel             string     `json:"titel"`
-	Genre             string     `json:"genre"`
-	Typ               string     `json:"typ"`
-	Standort          *string    `json:"standort"`
-	Signatur          *string    `json:"signatur"`
-	ExemplarCode      *string    `json:"exemplarCode"`
-	AktuellVerliehen  bool       `json:"aktuellVerliehen"`
-	VerliehenAn       *string    `json:"verliehenAn"`
-	VerliehenVon      *time.Time `json:"verliehenVon"`
-	FaelligBis        *time.Time `json:"faelligBis"`
-	Status            string     `json:"status"`
-	ErworbenAm        *time.Time `json:"erworbenAm"`
-	KatalogisiertAm   *time.Time `json:"katalogisiertAm"`
-	VerliehenNutzerId *string    `json:"verliehenNutzerId"`
+	MediumID            string     `json:"mediumId"`
+	ISBN                string     `json:"isbn"`
+	Titel               string     `json:"titel"`
+	Genre               string     `json:"genre"`
+	Typ                 string     `json:"typ"`
+	Standort            *string    `json:"standort"`
+	Signatur            *string    `json:"signatur"`
+	ExemplarCode        *string    `json:"exemplarCode"`
+	AktuellVerliehen    bool       `json:"aktuellVerliehen"`
+	VerliehenAn         *string    `json:"verliehenAn"`
+	VerliehenVon        *time.Time `json:"verliehenVon"`
+	FaelligBis          *time.Time `json:"faelligBis"`
+	Status              string     `json:"status"`
+	ErworbenAm          *time.Time `json:"erworbenAm"`
+	KatalogisiertAm     *time.Time `json:"katalogisiertAm"`
+	VerliehenNutzerId   *string    `json:"verliehenNutzerId"`
+	VerlorenVonNutzerId *string    `json:"verlorenVonNutzerId"`
+	VerlorenAm          *time.Time `json:"verlorenAm"`
+	VerlorenNutzerName  *string    `json:"verlorenNutzerName"`
 
 	Historie []MediumHistorieEntry `json:"historie"`
 }
@@ -43,30 +46,7 @@ func NewDetailseiteReader(db *pgxpool.Pool) *DetailseiteReader {
 }
 
 func (r *DetailseiteReader) GetMediumDetailWithHistorie(ctx context.Context, mediumID string) (*MediumDetail, error) {
-	const detailQuery = `
-		SELECT medium_id, isbn, titel, genre, typ, standort, signatur, exemplar_code, aktuell_verliehen, verliehen_an, verliehen_von, faellig_bis, status, erworben_am, katalogisiert_am, verliehen_an_nutzer_id
-		FROM medium_details
-		WHERE medium_id = $1
-	`
-	var detail MediumDetail
-	err := r.db.QueryRow(ctx, detailQuery, mediumID).Scan(
-		&detail.MediumID,
-		&detail.ISBN,
-		&detail.Titel,
-		&detail.Genre,
-		&detail.Typ,
-		&detail.Standort,
-		&detail.Signatur,
-		&detail.ExemplarCode,
-		&detail.AktuellVerliehen,
-		&detail.VerliehenAn,
-		&detail.VerliehenVon,
-		&detail.FaelligBis,
-		&detail.Status,
-		&detail.ErworbenAm,
-		&detail.KatalogisiertAm,
-		&detail.VerliehenNutzerId,
-	)
+	detail, err := r.GetMediumDetails(ctx, mediumID)
 	if err != nil {
 		return nil, err
 	}
@@ -92,5 +72,39 @@ func (r *DetailseiteReader) GetMediumDetailWithHistorie(ctx context.Context, med
 		detail.Historie = append(detail.Historie, entry)
 	}
 
+	return detail, nil
+}
+
+func (r *DetailseiteReader) GetMediumDetails(ctx context.Context, mediumID string) (*MediumDetail, error) {
+	const detailQuery = `
+		SELECT medium_id, isbn, titel, genre, typ, standort, signatur, exemplar_code, aktuell_verliehen, verliehen_an, verliehen_von, faellig_bis, status, erworben_am, katalogisiert_am, verliehen_an_nutzer_id, verloren_von_nutzer_id, verloren_am, verloren_nutzer_name
+		FROM medium_details
+		WHERE medium_id = $1
+	`
+	var detail MediumDetail
+	err := r.db.QueryRow(ctx, detailQuery, mediumID).Scan(
+		&detail.MediumID,
+		&detail.ISBN,
+		&detail.Titel,
+		&detail.Genre,
+		&detail.Typ,
+		&detail.Standort,
+		&detail.Signatur,
+		&detail.ExemplarCode,
+		&detail.AktuellVerliehen,
+		&detail.VerliehenAn,
+		&detail.VerliehenVon,
+		&detail.FaelligBis,
+		&detail.Status,
+		&detail.ErworbenAm,
+		&detail.KatalogisiertAm,
+		&detail.VerliehenNutzerId,
+		&detail.VerlorenVonNutzerId,
+		&detail.VerlorenAm,
+		&detail.VerlorenNutzerName,
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &detail, nil
 }

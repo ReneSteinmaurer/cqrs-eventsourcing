@@ -1,0 +1,1 @@
+alter table nutzer_details add column verlorene_medien jsonb not null default '[]'

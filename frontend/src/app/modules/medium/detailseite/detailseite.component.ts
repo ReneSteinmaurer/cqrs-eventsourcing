@@ -20,6 +20,9 @@ import {BestandsverlustDialogComponent} from './components/aktionen/bestandsverl
 import {
   BestandsverlustAufhebenDialogComponent
 } from './components/aktionen/bestandsverlust-aufheben-dialog/bestandsverlust-aufheben-dialog.component';
+import {
+  WiederaufgefundenDurchNutzerDialogComponent
+} from './components/aktionen/wiederaufgefunden-durch-nutzer-dialog/wiederaufgefunden-durch-nutzer-dialog.component';
 
 @Component({
   selector: 'app-detailseite',
@@ -164,6 +167,14 @@ export class DetailseiteComponent {
   }
 
   openWiederaufgefundenDialog() {
+    if (this.mediumDetails()?.verlorenVonNutzerId) {
+      console.log('wiederaufgefunden')
+      this.dialog.open(WiederaufgefundenDurchNutzerDialogComponent, {
+        width: '70%',
+        height: '20%',
+      })
+      return
+    }
     this.dialog.open(BestandsverlustAufhebenDialogComponent, {
       width: '70%',
       height: '20%',

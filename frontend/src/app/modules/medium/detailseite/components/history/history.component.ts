@@ -1,10 +1,14 @@
 import {Component, inject, input} from '@angular/core';
 import {RowLabelComponent} from '../../../../../shared/ui/row-label/row-label.component';
 import {
-  HistoryEvent, MediumBestandsverlustEvent,
+  HistoryEvent,
+  MediumBestandsverlustEvent,
   MediumErworbenEvent,
   MediumKatalogisiertEvent,
-  MediumVerliehenEvent, MediumVerlorenDurchBenutzerEvent, MediumWiederaufgefundenEvent,
+  MediumVerliehenEvent,
+  MediumVerlorenDurchBenutzerEvent,
+  MediumWiederaufgefundenDurchNutzerEvent,
+  MediumWiederaufgefundenEvent,
   MediumZurueckgegebenEvent
 } from '../../types/medium-details';
 import {DatePipe} from '@angular/common';
@@ -91,6 +95,15 @@ import {Router} from '@angular/router';
                 am {{ event.payload.Date | date:'dd.MM.yyyy' }}
               </span>
               }
+
+              @if (isWiederaufgefundenDurchNutzer(event)) {
+                <span class="font-semibold text-gray-100 text-sm">
+                  Medium wurde von <span (click)="openNutzerDetailseite(event.payload.NutzerId)" class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span> wiederaufgefunden
+            </span>
+                <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+              }
             </div>
           </app-row-label>
         </div>
@@ -134,6 +147,10 @@ export class HistoryComponent {
     return event.eventType === 'MediumBestandsverlustEvent';
   }
 
+  isWiederaufgefundenDurchNutzer(event: HistoryEvent): event is MediumWiederaufgefundenDurchNutzerEvent {
+    return event.eventType === 'MediumWiederaufgefundenDurchNutzerEvent';
+  }
+
   getIcon(event: HistoryEvent): string {
     if (this.isErworben(event)) return 'label_important';
     if (this.isKatalogisiert(event)) return 'library_add';
@@ -142,7 +159,7 @@ export class HistoryComponent {
     if (this.isVerlorenDurchNutzer(event)) return 'report';
     if (this.isBestandsverlustAufheben(event)) return 'undo';
     if (this.isBestandsverlust(event)) return 'cancel_presentation';
+    if (this.isWiederaufgefundenDurchNutzer(event)) return 'keyboard_return';
     return 'help'; // fallback
   }
-
 }
