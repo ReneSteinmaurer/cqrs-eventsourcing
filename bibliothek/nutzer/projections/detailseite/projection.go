@@ -5,7 +5,6 @@ import (
 	events4 "cqrs-playground/bibliothek/medien/ausleihen/events"
 	events2 "cqrs-playground/bibliothek/medien/erwerben/events"
 	"cqrs-playground/bibliothek/medien/projections/detailseite"
-	"cqrs-playground/bibliothek/medien/projections/verliehen"
 	events5 "cqrs-playground/bibliothek/medien/rueckgeben/events"
 	"cqrs-playground/bibliothek/medien/verlieren/events"
 	events6 "cqrs-playground/bibliothek/medien/wiederaufgefunden/events"
@@ -78,7 +77,7 @@ func (d *DetailseiteProjection) applyNutzerRegistriert(payloadJSON []byte) {
 }
 
 func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
-	var payload verliehen.MediumVerliehen
+	var payload events4.MediumVerliehenEvent
 	if err := json.Unmarshal(payloadJSON, &payload); err != nil {
 		log.Println("Error unmarshalling event:", err)
 		return
@@ -93,8 +92,8 @@ func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
 	ausleihe := AktiveAusleihe{
 		MediumId:      payload.MediumId,
 		Titel:         medium.Titel,
-		AusgeliehenAm: &payload.VerliehenVon,
-		FaelligAm:     &payload.VerliehenBis,
+		AusgeliehenAm: &payload.Von,
+		FaelligAm:     &payload.Bis,
 		Status:        AusleihstatusAktiv,
 	}
 

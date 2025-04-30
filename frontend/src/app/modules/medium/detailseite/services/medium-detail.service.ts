@@ -36,7 +36,6 @@ export class MediumDetailService {
       console.error('medium id is nullish!')
       return EMPTY
     }
-    // todo handle errors
     return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/verleihe-medium', {
       nutzerId,
       mediumId
@@ -57,7 +56,6 @@ export class MediumDetailService {
       console.error('mediumId or nutzerId is nullish!')
       return EMPTY
     }
-    // todo handle errors
     return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/gebe-medium-zurueck', {
       nutzerId,
       mediumId
@@ -78,7 +76,6 @@ export class MediumDetailService {
       console.error('mediumId or nutzerId is nullish!')
       return EMPTY
     }
-    // todo handle errors
     return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/verloren-durch-nutzer', {
       nutzerId,
       mediumId
@@ -98,7 +95,6 @@ export class MediumDetailService {
       console.error('mediumId is nullish!')
       return EMPTY
     }
-    // todo handle errors
     return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/bestandsverlust', {
       mediumId
     }).pipe(tap({
@@ -117,7 +113,6 @@ export class MediumDetailService {
       console.error('mediumId is nullish!')
       return EMPTY
     }
-    // todo handle errors
     return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/bestandsverlust-aufheben', {
       mediumId
     }).pipe(tap({
@@ -137,7 +132,6 @@ export class MediumDetailService {
       console.error('mediumId or nutzerId is nullish!')
       return EMPTY
     }
-    // todo handle errors
     return this.rest.postAndAwaitProjectionUpdate('http://localhost:8080/bibliothek/wiederaufgefunden-durch-nutzer', {
       nutzerId,
       mediumId
