@@ -9,6 +9,11 @@ export const routes: Routes = [
   {
     path: 'medium/:id',
     loadComponent: () => import('./modules/medium/detailseite/detailseite.component')
-      .then((x) => x.DetailseiteComponent)
+      .then((c) => c.DetailseiteComponent)
+  },
+  {
+    path: 'nutzer/:id',
+    loadComponent: () => import('./modules/nutzer/detailseite/detailseite.component')
+      .then((c) => c.DetailseiteComponent)
   }
 ];

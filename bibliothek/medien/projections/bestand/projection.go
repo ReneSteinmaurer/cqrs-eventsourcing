@@ -56,7 +56,7 @@ func (cp *MedienProjection) applyMediumErworben(payloadJSON []byte) {
 	if err != nil {
 		log.Println("Error updating read-model:", err)
 	}
-	cp.NotificationService.Notify(payload.MediumId)
+	cp.NotificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (cp *MedienProjection) applyMediumKatalogisiert(payloadJSON []byte) {
@@ -86,5 +86,5 @@ func (cp *MedienProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 		log.Println("Error updating read-model:", err)
 		return
 	}
-	cp.NotificationService.Notify(payload.MediumId)
+	cp.NotificationService.NotifyProjectionUpdated(payload.MediumId)
 }

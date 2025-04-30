@@ -22,7 +22,7 @@ func NewNotificationService(ctx context.Context, webSocketHub *WebSocketHub) *No
 	}
 }
 
-func (n *NotificationService) Notify(aggregateId string) {
+func (n *NotificationService) NotifyProjectionUpdated(aggregateId string) {
 	notification := WebSocketMessage{
 		Type: ProjectionUpdatedType,
 		Data: aggregateId,

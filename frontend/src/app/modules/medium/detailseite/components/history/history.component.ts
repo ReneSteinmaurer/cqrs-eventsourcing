@@ -1,4 +1,4 @@
-import {Component, input} from '@angular/core';
+import {Component, inject, input} from '@angular/core';
 import {RowLabelComponent} from '../../../../../shared/ui/row-label/row-label.component';
 import {
   HistoryEvent, MediumBestandsverlustEvent,
@@ -8,6 +8,7 @@ import {
   MediumZurueckgegebenEvent
 } from '../../types/medium-details';
 import {DatePipe} from '@angular/common';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-history',
@@ -20,11 +21,7 @@ import {DatePipe} from '@angular/common';
       @for (event of historyEvents(); track $index) {
         <div class="bg-[#00dddd]/10 rounded-xl p-4 shadow-md hover:bg-[#00dddd]/15 transition">
           <app-row-label
-            [icon]="
-          isErworben(event) ? 'library_add' :
-          isKatalogisiert(event) ? 'label_important' :
-          'assignment_returned'
-        "
+            [icon]="getIcon(event)"
             [iconClass]="'text-primary'"
             [label]="(event.timestamp | date:'dd.MM.yyyy') ?? ''"
           >
@@ -44,7 +41,7 @@ import {DatePipe} from '@angular/common';
 
               @if (isVerliehen(event)) {
                 <span class="font-semibold text-gray-100 text-sm">
-              Verliehen an <span class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+              Verliehen an <span (click)="openNutzerDetailseite(event.payload.NutzerId)" class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
             </span>
                 @if (event.payload.Von && event.payload.Bis) {
                   <span class="text-gray-400 text-xs mt-1">
@@ -56,6 +53,7 @@ import {DatePipe} from '@angular/common';
               @if (isZurueckgegeben(event)) {
                 <span class="font-semibold text-gray-100 text-sm">
               Medium zurückgegeben von <span
+                  (click)="openNutzerDetailseite(event.payload.NutzerId)"
                   class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
             </span>
                 @if (event.payload.Date) {
@@ -67,7 +65,7 @@ import {DatePipe} from '@angular/common';
 
               @if (isVerlorenDurchNutzer(event)) {
                 <span class="font-semibold text-gray-100 text-sm">
-              Medium verloren von <span class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+              Medium verloren von <span (click)="openNutzerDetailseite(event.payload.NutzerId)" class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
             </span>
                 @if (event.payload.Date) {
                   <span class="text-gray-400 text-xs mt-1">
@@ -101,7 +99,12 @@ import {DatePipe} from '@angular/common';
   `,
 })
 export class HistoryComponent {
+  router = inject(Router)
   historyEvents = input.required<HistoryEvent[]>()
+
+  openNutzerDetailseite(id: string) {
+    this.router.navigate(['/nutzer', id]);
+  }
 
   isErworben(event: HistoryEvent): event is MediumErworbenEvent {
     return event.eventType === 'MediumErworbenEvent';
@@ -130,4 +133,16 @@ export class HistoryComponent {
   isBestandsverlust(event: HistoryEvent): event is MediumBestandsverlustEvent {
     return event.eventType === 'MediumBestandsverlustEvent';
   }
+
+  getIcon(event: HistoryEvent): string {
+    if (this.isErworben(event)) return 'label_important';
+    if (this.isKatalogisiert(event)) return 'library_add';
+    if (this.isVerliehen(event)) return 'logout';
+    if (this.isZurueckgegeben(event)) return 'keyboard_return';
+    if (this.isVerlorenDurchNutzer(event)) return 'report';
+    if (this.isBestandsverlustAufheben(event)) return 'undo';
+    if (this.isBestandsverlust(event)) return 'cancel_presentation';
+    return 'help'; // fallback
+  }
+
 }

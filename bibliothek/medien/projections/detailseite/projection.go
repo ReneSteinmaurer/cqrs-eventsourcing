@@ -82,7 +82,7 @@ func (d *DetailseiteProjection) applyMediumErworben(payloadJSON []byte) {
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumKatalogisiert(payloadJSON []byte) {
@@ -113,7 +113,7 @@ func (d *DetailseiteProjection) applyMediumKatalogisiert(payloadJSON []byte) {
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
@@ -152,7 +152,7 @@ func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
@@ -184,7 +184,7 @@ func (d *DetailseiteProjection) applyMediumZurueckgegeben(payloadJSON []byte) {
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumVerlorenDurchNutzer(payloadJSON []byte) {
@@ -227,7 +227,7 @@ func (d *DetailseiteProjection) applyMediumVerlorenDurchNutzer(payloadJSON []byt
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumBestandsverlust(payloadJSON []byte) {
@@ -261,7 +261,7 @@ func (d *DetailseiteProjection) applyMediumBestandsverlust(payloadJSON []byte) {
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) applyMediumWiederaufgefunden(payloadJSON []byte) {
@@ -290,7 +290,7 @@ func (d *DetailseiteProjection) applyMediumWiederaufgefunden(payloadJSON []byte)
 		log.Println("Error saving history event:", err)
 		return
 	}
-	d.notificationService.Notify(payload.MediumId)
+	d.notificationService.NotifyProjectionUpdated(payload.MediumId)
 }
 
 func (d *DetailseiteProjection) saveHistoryEvent(mediumID string, eventType string, eventPayload any) error {
