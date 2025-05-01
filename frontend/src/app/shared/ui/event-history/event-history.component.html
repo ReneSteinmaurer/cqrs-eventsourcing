@@ -1,0 +1,101 @@
+<div class="flex flex-col gap-2">
+  @for (event of events(); track $index) {
+    <div class="bg-[#00dddd]/10 rounded-xl p-4 shadow-md hover:bg-[#00dddd]/15 transition">
+      <app-row-label
+        [icon]="getIcon(event)"
+        [iconClass]="'text-primary'"
+        [label]="(event.timestamp | date:'dd.MM.yyyy') ?? ''"
+      >
+        <div class="flex flex-col">
+
+          @if (isEventType(event, 'NutzerRegistriertEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+              Nutzer {{ event.payload.Vorname }} {{ event.payload.Nachname }} registriert
+            </span>
+          }
+
+          @if (isEventType(event, 'MediumErworbenEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+              Medium erworben: {{ event.payload.Name }} ({{ event.payload.MediumType }})
+            </span>
+          }
+
+          @if (isEventType(event, 'MediumKatalogisiertEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+              Katalogisiert: {{ event.payload.Standort }}, Signatur: {{ event.payload.Signature }}
+            </span>
+          }
+
+          @if (isEventType(event, 'MediumVerliehenEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+              <span (click)="openMediumDetailseite(event.payload.MediumId)"
+                    class="hover:underline hover:cursor-pointer">Medium</span> Verliehen an <span (click)="openNutzerDetailseite(event.payload.NutzerId)"
+                                 class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+            </span>
+            @if (event.payload.Von && event.payload.Bis) {
+              <span class="text-gray-400 text-xs mt-1">
+                von {{ event.payload.Von | date:'dd.MM.yyyy' }} bis {{ event.payload.Bis | date:'dd.MM.yyyy' }}
+              </span>
+            }
+          }
+
+          @if (isEventType(event, 'MediumZurueckgegebenEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+               <span (click)="openMediumDetailseite(event.payload.MediumId)"
+                     class="hover:underline hover:cursor-pointer">Medium</span> zurückgegeben von <span
+              (click)="openNutzerDetailseite(event.payload.NutzerId)"
+              class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+            </span>
+            @if (event.payload.Date) {
+              <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+            }
+          }
+
+          @if (isEventType(event, 'MediumVerlorenDurchBenutzerEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+               <span (click)="openMediumDetailseite(event.payload.MediumId)"
+                     class="hover:underline hover:cursor-pointer">Medium</span> verloren von <span (click)="openNutzerDetailseite(event.payload.NutzerId)"
+                                        class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span>
+            </span>
+            @if (event.payload.Date) {
+              <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+            }
+          }
+
+          @if (isEventType(event, 'MediumWiederaufgefundenEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+                  Bestandsverlust wurde aufgehoben
+            </span>
+            <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+          }
+
+          @if (isEventType(event, 'MediumBestandsverlustEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+                    Medium wurde als Bestandsverlust markiert
+            </span>
+            <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+          }
+
+          @if (isEventType(event, 'MediumWiederaufgefundenDurchNutzerEvent')) {
+            <span class="font-semibold text-gray-100 text-sm">
+                   <span (click)="openMediumDetailseite(event.payload.MediumId)"
+                         class="hover:underline hover:cursor-pointer">Medium</span> wurde von <span (click)="openNutzerDetailseite(event.payload.NutzerId)"
+                                         class="hover:underline hover:cursor-pointer">{{ event.payload.NutzerId }}</span> wiederaufgefunden
+            </span>
+            <span class="text-gray-400 text-xs mt-1">
+                am {{ event.payload.Date | date:'dd.MM.yyyy' }}
+              </span>
+          }
+        </div>
+      </app-row-label>
+    </div>
+  }
+</div>

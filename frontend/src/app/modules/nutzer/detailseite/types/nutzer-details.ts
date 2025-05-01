@@ -1,3 +1,5 @@
+import {HistoryEvent} from '../../../../shared/types/history-events';
+
 export type Ausleihstatus = 'AKTIV' | 'ÜBERFÄLLIG' | 'BALD_FÄLLIG';
 export type NutzerStatus = 'AKTIV' | 'GESPERRT';
 
@@ -34,4 +36,6 @@ export interface NutzerDetails {
   verloreneMedien: VerlorenesMedium[];
 
   sperrgrund: string | null;
+
+  historie: HistoryEvent[]
 }

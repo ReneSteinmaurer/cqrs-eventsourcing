@@ -28,7 +28,7 @@ func NewNutzerDetailsAPI(db *pgxpool.Pool) *NutzerDetailsAPI {
 
 func (m *NutzerDetailsAPI) GetAll(w http.ResponseWriter, r *http.Request) {
 	mediumID := r.URL.Query().Get("nutzerId")
-	mediumDetails, err := m.detailseiteReader.GetNutzerDetails(m.ctx, mediumID)
+	mediumDetails, err := m.detailseiteReader.GetNutzerDetailWithHistorie(m.ctx, mediumID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -3,7 +3,6 @@ package detailseite
 import (
 	"context"
 	events4 "cqrs-playground/bibliothek/medien/ausleihen/events"
-	events2 "cqrs-playground/bibliothek/medien/erwerben/events"
 	"cqrs-playground/bibliothek/medien/projections/detailseite"
 	events5 "cqrs-playground/bibliothek/medien/rueckgeben/events"
 	"cqrs-playground/bibliothek/medien/verlieren/events"
@@ -69,7 +68,7 @@ func (d *DetailseiteProjection) applyNutzerRegistriert(payloadJSON []byte) {
 		return
 	}
 
-	if err := d.saveHistoryEvent(payload.NutzerId, events2.MediumErworbenEventType, payload); err != nil {
+	if err := d.saveHistoryEvent(payload.NutzerId, events7.NutzerRegistriertEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
 		return
 	}
@@ -114,7 +113,7 @@ func (d *DetailseiteProjection) applyMediumVerliehen(payloadJSON []byte) {
 		return
 	}
 
-	if err := d.saveHistoryEvent(payload.NutzerId, events2.MediumErworbenEventType, payload); err != nil {
+	if err := d.saveHistoryEvent(payload.NutzerId, events4.MediumVerliehenEventType, payload); err != nil {
 		log.Println("Error saving history event:", err)
 		return
 	}

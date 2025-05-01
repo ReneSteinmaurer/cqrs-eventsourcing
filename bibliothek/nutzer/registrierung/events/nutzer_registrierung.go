@@ -1,5 +1,7 @@
 package events
 
+const NutzerRegistriertEventType = "NutzerRegistriertEvent"
+
 type NutzerRegistriertEvent struct {
 	Vorname  string
 	Nachname string
@@ -15,5 +17,3 @@ func NewNutzerRegistrierungEvent(Email, Vorname, Nachname, NutzerId string) Nutz
 		NutzerId: NutzerId,
 	}
 }
-
-const NutzerRegistriertEventType = "NutzerRegistriertEventType"

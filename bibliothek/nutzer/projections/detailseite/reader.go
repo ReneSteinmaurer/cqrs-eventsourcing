@@ -15,6 +15,36 @@ func NewDetailseiteReader(db *pgxpool.Pool) *DetailseiteReader {
 	return &DetailseiteReader{db: db}
 }
 
+func (r *DetailseiteReader) GetNutzerDetailWithHistorie(ctx context.Context, nutzerID string) (*NutzerDetails, error) {
+	detail, err := r.GetNutzerDetails(ctx, nutzerID)
+	if err != nil {
+		return nil, err
+	}
+
+	const historyQuery = `
+		SELECT event_type, event_timestamp, payload
+		FROM nutzer_history
+		WHERE nutzer_id = $1
+		ORDER BY event_timestamp desc
+	`
+	rows, err := r.db.Query(ctx, historyQuery, nutzerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry NutzerHistorieEntry
+		err := rows.Scan(&entry.EventType, &entry.Timestamp, &entry.Payload)
+		if err != nil {
+			return nil, err
+		}
+		detail.Historie = append(detail.Historie, entry)
+	}
+
+	return detail, nil
+}
+
 func (r *DetailseiteReader) GetNutzerDetails(ctx context.Context, nutzerId string) (*NutzerDetails, error) {
 	const query = `
         SELECT vorname, nachname, status, registriert_am, aktive_ausleihen, letzte_notizen, verlorene_medien, sperrgrund

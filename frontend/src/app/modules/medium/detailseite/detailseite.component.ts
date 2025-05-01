@@ -9,8 +9,8 @@ import {CardComponent} from '../../../shared/ui/card/card.component';
 import {ActivatedRoute, Router} from '@angular/router';
 import {StatusChipComponent} from './components/status-chip/status-chip.component';
 import {MediumDetailService} from './services/medium-detail.service';
-import {HistoryComponent} from './components/history/history.component';
-import {DatePipe} from '@angular/common';
+import {EventHistoryComponent} from '../../../shared/ui/event-history/event-history.component';
+import {DatePipe, Location} from '@angular/common';
 import {AktionenComponent} from './components/aktionen/aktionen.component';
 import {MatDialog} from '@angular/material/dialog';
 import {VerleihenComponent} from './components/aktionen/verleihen/verleihen.component';
@@ -35,7 +35,7 @@ import {
     RowLabelComponent,
     CardComponent,
     StatusChipComponent,
-    HistoryComponent,
+    EventHistoryComponent,
     DatePipe,
     AktionenComponent,
   ],
@@ -44,9 +44,9 @@ import {
       <div class="flex justify-center items-center">
         <div class="p-6 space-y-6 w-full lg:w-5/6 xl:w-1/2 mt-12">
           <div class="flex justify-between">
-            <button (click)="navigateToLandingPage()" mat-stroked-button color="primary" class="mb-4">
+            <button (click)="navigateToPreviousPage()" mat-stroked-button color="primary" class="mb-4">
               <mat-icon>arrow_back</mat-icon>
-              Zurück zur Übersicht
+              Zurück
             </button>
             <app-aktionen (verlorenDurchNutzer)="openVerlorenDurchNutzerDialog()"
                           (zuruecknehmen)="openZuruecknehmenDialog()"
@@ -101,7 +101,7 @@ import {
             <mat-tab label="Historie">
               <div class="p-4 space-y-4">
                 <div class="flex flex-col space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                  <app-history [historyEvents]="mediumDetails()?.historie ?? []"/>
+                  <app-event-history [historyEvents]="mediumDetails()?.historie ?? []"/>
                 </div>
               </div>
             </mat-tab>
@@ -119,6 +119,7 @@ import {
 export class DetailseiteComponent {
   router = inject(Router)
   route = inject(ActivatedRoute)
+  location = inject(Location)
   dialog = inject(MatDialog)
   detailService = inject(MediumDetailService)
   mediumId = input.required<string>({alias: 'mediumId'})
@@ -134,8 +135,8 @@ export class DetailseiteComponent {
     })
   }
 
-  navigateToLandingPage() {
-    this.router.navigate([''])
+  navigateToPreviousPage() {
+    this.location.back()
   }
 
   openVerleihenDialog() {

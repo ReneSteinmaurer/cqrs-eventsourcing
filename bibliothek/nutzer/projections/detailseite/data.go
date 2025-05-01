@@ -1,6 +1,9 @@
 package detailseite
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Ausleihstatus string
 type NutzerStatus string
@@ -13,6 +16,12 @@ const (
 	NutzerstatusAktiv    NutzerStatus = "AKTIV"
 	NutzerstatusGesperrt NutzerStatus = "GESPERRT"
 )
+
+type NutzerHistorieEntry struct {
+	EventType string          `json:"eventType"`
+	Timestamp time.Time       `json:"timestamp"`
+	Payload   json.RawMessage `json:"payload"`
+}
 
 type AktiveAusleihe struct {
 	MediumId      string        `json:"mediumId"`
@@ -47,4 +56,6 @@ type NutzerDetails struct {
 	VerloreneMedien []VerlorenesMedium `json:"verloreneMedien"`
 
 	Sperrgrund *string `json:"sperrgrund"`
+
+	Historie []NutzerHistorieEntry `json:"historie"`
 }
